@@ -121,6 +121,47 @@
     <!-- LEFT: Style -->
     <section class="lg:col-span-5 flex flex-col gap-5">
 
+      <!-- Sound Match -->
+      <div id="sound-match" class="bg-slate-900/70 border border-cyan-500/25 rounded-2xl p-5 shadow-xl flex flex-col gap-3">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-bullseye text-cyan-400 text-sm"></i>
+            <h2 class="text-sm font-semibold tracking-wide uppercase text-slate-300">Sound Match</h2>
+          </div>
+          <span class="text-[11px] text-slate-400">Artist, song, or both</span>
+        </div>
+        <p class="text-[11px] text-slate-400 leading-relaxed">
+          Describes the <em>sound</em> (genre, tempo, instruments, production, vocals, mood) so you never need a real name in the prompt. It gets the vibe, not a clone. Write your own lyrics.
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div class="flex flex-col gap-1">
+            <label for="sm-artist" class="text-[10px] font-mono uppercase tracking-wider text-slate-500">Artist (optional)</label>
+            <input id="sm-artist" list="sm-artist-list" type="text" autocomplete="off" placeholder="e.g. Dire Straits"
+                   class="w-full bg-slate-950/80 border border-slate-800 text-xs text-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-cyan-400 placeholder-slate-500 transition-all">
+            <datalist id="sm-artist-list"></datalist>
+          </div>
+          <div class="flex flex-col gap-1">
+            <label for="sm-song" class="text-[10px] font-mono uppercase tracking-wider text-slate-500">Song (optional)</label>
+            <input id="sm-song" list="sm-song-list" type="text" autocomplete="off" placeholder="e.g. Money for Nothing"
+                   class="w-full bg-slate-950/80 border border-slate-800 text-xs text-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-cyan-400 placeholder-slate-500 transition-all">
+            <datalist id="sm-song-list"></datalist>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+          <label class="flex items-center gap-1.5 text-[11px] text-slate-400 cursor-pointer">
+            <input type="checkbox" id="sm-replace" checked class="accent-cyan-500"> Replace current style
+          </label>
+          <div class="ml-auto flex items-center gap-2">
+            <button onclick="clearSoundMatch()" class="text-xs text-slate-400 hover:text-slate-200 px-2.5 py-1.5 rounded-lg hover:bg-slate-800 transition-colors">Clear</button>
+            <button onclick="runSoundMatch()" class="bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md shadow-cyan-950/40">
+              <i class="fa-solid fa-bullseye"></i> Match sound
+            </button>
+          </div>
+        </div>
+        <div id="sm-result" class="flex flex-col gap-2"></div>
+      </div>
+
+
       <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
         <div class="flex items-center justify-between gap-2">
           <div class="flex items-center gap-2">
@@ -1055,6 +1096,379 @@
         loadData(PRESETS.synthwave);
       }
     };
+  </script>
+  <!-- Sound Match logic -->
+  <script>
+    // ===============================================================
+    // SOUND MATCH: turns an artist and/or song into a description of
+    // the SOUND (genre, tempo, instruments, production, vocals, mood).
+    // Names are never put into the style prompt.
+    // To grow the library, add lines with smA(...) and smS(...) below.
+    // Fields: g=genre, i=instruments/arrangement, t=texture/production,
+    // v=vocals, m=mood, x=exclude suggestions. BPMs are approximate.
+    // ===============================================================
+    // ==PURE-START==
+    const SM_ARTISTS = [];
+    const SM_SONGS = [];
+    function smA(name, aliases, g, i, t, v, m, x) { SM_ARTISTS.push({ name, aliases: aliases || [], g, i, t, v, m, x: x || [] }); }
+    function smS(title, artist, bpm, g, i, t, v, m, layout, aliases) { SM_SONGS.push({ title, artist, bpm, g, i, t, v, m, layout, aliases: aliases || [], x: [] }); }
+
+    // ---------- Artists ----------
+    smA("Dire Straits", [], ["blues rock", "80s rock"], ["fingerpicked clean stratocaster-style guitar", "flowing melodic guitar fills", "restrained steady drums", "warm organ"], ["clean warm guitar tone", "spacious mix"], ["laid-back gravelly male vocals", "spoken-sung storytelling delivery"], ["wry", "laid-back"], ["autotune", "edm drops"]);
+    smA("Queen", [], ["theatrical rock", "glam rock"], ["layered multi-tracked guitar harmonies", "grand piano", "stomping drums and handclaps", "melodic bass"], ["rich polished studio production"], ["powerful operatic male vocals", "stacked choir-like harmonies"], ["dramatic", "anthemic"], ["autotune"]);
+    smA("The Beatles", ["beatles"], ["60s pop rock", "british invasion"], ["jangly guitars", "melodic bass lines", "simple punchy drums", "piano"], ["vintage analog tape warmth"], ["tight close male vocal harmonies"], ["joyful", "wistful"], ["autotune", "edm drops"]);
+    smA("Fleetwood Mac", [], ["70s soft rock", "pop rock"], ["fingerpicked guitars", "warm electric piano", "tight drums", "melodic bass"], ["lush analog production"], ["close female and male vocal harmonies"], ["wistful", "romantic"], ["autotune"]);
+    smA("Nirvana", [], ["grunge"], ["distorted guitars", "quiet-loud dynamics", "thumping bass", "loose punchy drums"], ["raw gritty production"], ["raspy shouted male vocals"], ["angsty", "rebellious"], ["autotune", "synths"]);
+    smA("Pink Floyd", [], ["psychedelic progressive rock"], ["slow bluesy guitar solos", "analog synths", "warm organ", "spacious sound effects"], ["spacious reverb", "ambient textures"], ["calm understated male vocals", "soulful backing vocals"], ["dreamy", "melancholic"], ["edm drops"]);
+    smA("Led Zeppelin", ["led zep"], ["hard rock", "blues rock"], ["heavy riff-driven guitar", "pounding live drums", "thick melodic bass"], ["live room sound"], ["high wailing male vocals"], ["mystical", "powerful"], ["autotune", "synths"]);
+    smA("AC/DC", [], ["hard rock"], ["crunchy power chord riffs", "steady backbeat drums", "simple driving bass"], ["raw loud amp tone"], ["high raspy male vocals", "gang shouted chorus"], ["rowdy", "swaggering"], ["autotune", "synths"]);
+    smA("Michael Jackson", ["mj"], ["pop funk", "r&b"], ["tight funk bass", "punchy crisp drums", "synth stabs", "funk guitar scratch", "brass hits"], ["polished studio production"], ["smooth high male vocals", "vocal hiccups and ad-libs"], ["groovy", "dynamic"], ["heavy distortion"]);
+    smA("Prince", [], ["funk pop", "minneapolis funk"], ["drum machine", "synth bass", "funk guitar", "tight horn stabs"], ["dry punchy mix"], ["falsetto male vocals", "sultry spoken ad-libs"], ["sultry", "playful"], ["acoustic guitar"]);
+    smA("Taylor Swift", [], ["modern pop", "synth-pop"], ["layered synths", "punchy pop drums", "bright acoustic guitar"], ["glossy modern production"], ["clear expressive female vocals"], ["confessional", "catchy"], ["heavy distortion"]);
+    smA("Billie Eilish", [], ["dark electropop"], ["deep sub bass", "minimal sparse beats", "finger snaps"], ["intimate close-mic production"], ["whispered breathy female vocals"], ["moody", "dark"], ["big choirs"]);
+    smA("Ed Sheeran", [], ["acoustic pop"], ["looped acoustic guitar percussion", "fingerpicked acoustic guitar", "light drums"], ["warm intimate production"], ["warm earnest male vocals", "rhythmic rap-sung phrasing"], ["heartfelt", "romantic"], ["heavy distortion"]);
+    smA("Adele", [], ["soul pop"], ["piano-led arrangement", "big stomping drums", "gospel-style backing vocals", "string swells"], ["rich warm production"], ["powerful smoky female vocals"], ["heartbroken", "dramatic"], ["autotune"]);
+    smA("Daft Punk", [], ["french house", "disco house"], ["filtered disco samples", "four-on-the-floor kick", "funky bass", "vocoder vocals"], ["sidechain compression", "polished retro-futuristic production"], ["vocoder robot vocals"], ["groovy", "euphoric"], ["acoustic guitar"]);
+    smA("Metallica", [], ["thrash metal", "heavy metal"], ["palm-muted galloping riffs", "double kick drums", "aggressive guitar solos"], ["tight heavy mix"], ["gruff shouted male vocals"], ["aggressive", "dark"], ["autotune"]);
+    smA("Iron Maiden", [], ["heavy metal", "new wave of british heavy metal"], ["twin guitar harmonies", "galloping bass", "fast drum fills"], ["epic live-band sound"], ["soaring operatic male vocals"], ["epic", "adventurous"], ["autotune"]);
+    smA("Black Sabbath", [], ["doom metal", "heavy metal"], ["down-tuned crushing riffs", "slow heavy drums", "thick bass"], ["dark heavy sound"], ["haunting nasal male vocals"], ["ominous", "dark"], ["autotune"]);
+    smA("Foo Fighters", [], ["alternative rock", "post-grunge"], ["distorted guitars", "powerful drums", "driving bass"], ["big live-band production"], ["raspy yelled male vocals", "melodic choruses"], ["energetic", "anthemic"], ["synths"]);
+    smA("Oasis", [], ["britpop"], ["wall of strummed guitars", "steady drums", "tambourine"], ["big loud mix"], ["nasal sneering male vocals"], ["swaggering", "anthemic"], ["autotune"]);
+    smA("Arctic Monkeys", [], ["indie rock", "garage rock revival"], ["tight guitar riffs", "fast tight drums", "driving bass"], ["raw punchy production"], ["british accent male vocals", "fast wordy delivery"], ["sharp", "cool"], ["autotune"]);
+    smA("Coldplay", [], ["alternative pop rock", "stadium rock"], ["piano", "shimmering delay guitars", "steady drums", "atmospheric synths"], ["spacious reverb", "polished production"], ["falsetto-tinged male vocals", "crowd singalong choruses"], ["uplifting", "emotional"], ["heavy distortion"]);
+    smA("Radiohead", [], ["art rock", "alternative rock"], ["moody layered guitars", "electronic textures", "unconventional drum patterns"], ["atmospheric production"], ["fragile falsetto male vocals"], ["melancholic", "anxious"], ["big choirs"]);
+    smA("The Cure", ["cure"], ["post-punk", "gothic rock"], ["chorus-drenched guitars", "melodic bass lead", "synth pads"], ["dreamy reverb"], ["wistful yearning male vocals"], ["romantic", "melancholic"], ["heavy distortion"]);
+    smA("Depeche Mode", [], ["synth-pop", "dark electronic"], ["analog synths", "drum machine", "pulsing synth bass"], ["moody dark production"], ["deep baritone male vocals"], ["brooding", "sensual"], ["acoustic guitar"]);
+    smA("ABBA", [], ["disco pop", "europop"], ["bright piano", "layered female harmonies", "shimmering strings", "tight bass"], ["polished glossy production"], ["bright female vocals in harmony"], ["joyful", "bittersweet"], ["heavy distortion"]);
+    smA("Bee Gees", [], ["disco"], ["funk guitar chops", "steady four-on-the-floor beat", "lush strings", "melodic bass"], ["slick 70s production"], ["falsetto male harmonies"], ["strutting", "romantic"], ["heavy distortion"]);
+    smA("Bob Marley", [], ["roots reggae"], ["offbeat guitar skank", "one-drop drums", "warm rolling bass", "female backing vocals"], ["warm analog sound"], ["soulful relaxed male vocals"], ["uplifting", "laid-back"], ["autotune", "synths"]);
+    smA("Johnny Cash", [], ["outlaw country", "folk country"], ["boom-chicka-boom guitar rhythm", "acoustic guitar", "upright bass", "light brushed drums"], ["raw dry production"], ["deep baritone male vocals"], ["stoic", "rebellious"], ["autotune", "synths"]);
+    smA("Dolly Parton", [], ["country pop"], ["acoustic guitar", "banjo", "fiddle", "pedal steel guitar"], ["warm bright production"], ["bright high female vocals with twang"], ["heartfelt", "warm"], ["heavy distortion"]);
+    smA("Elvis Presley", ["elvis"], ["50s rockabilly", "early rock and roll"], ["slapback echo guitar", "upright slap bass", "twangy guitar licks", "backing vocal group"], ["vintage tape echo"], ["smooth baritone male vocals with swagger"], ["swaggering", "playful"], ["autotune", "synths"]);
+    smA("Frank Sinatra", ["sinatra"], ["swing", "traditional pop"], ["big band brass", "lush strings", "swinging brushed drums", "walking upright bass"], ["vintage studio warmth"], ["smooth crooner male vocals"], ["suave", "romantic"], ["autotune", "synths"]);
+    smA("Amy Winehouse", [], ["retro soul", "jazz-tinged soul"], ["vintage soul band", "punchy horn section", "upright bass", "girl-group style drums"], ["vintage analog warmth"], ["smoky deep female vocals"], ["bittersweet", "sassy"], ["autotune"]);
+    smA("Stevie Wonder", [], ["soul funk"], ["clavinet riffs", "synth bass", "harmonica", "tight horn section"], ["warm 70s production"], ["joyful expressive male vocals"], ["joyful", "groovy"], ["heavy distortion"]);
+    smA("Hans Zimmer", [], ["cinematic orchestral", "epic film score"], ["pulsing ostinato strings", "huge brass", "layered synths", "epic percussion"], ["huge cinematic reverb"], [], ["epic", "emotional"], ["vocals", "rap"]);
+    smA("Eagles", [], ["country rock", "soft rock"], ["twin guitars", "acoustic guitar", "tight vocal harmonies", "steady drums"], ["clean 70s production"], ["smooth male vocals with rich harmonies"], ["laid-back", "wistful"], ["autotune", "synths"]);
+    smA("Bruce Springsteen", ["springsteen"], ["heartland rock"], ["pounding piano", "saxophone", "big drums", "glockenspiel", "driving guitars"], ["big anthemic mix"], ["gravelly earnest male vocals"], ["anthemic", "working-class"], ["autotune"]);
+    smA("Guns N' Roses", ["guns and roses", "gnr"], ["hard rock", "sleaze rock"], ["bluesy lead guitar", "heavy crunchy riffs", "pounding drums"], ["gritty raw sound"], ["high screaming male vocals"], ["gritty", "rebellious"], ["autotune"]);
+    smA("Bon Jovi", [], ["arena rock", "80s hair metal"], ["talkbox guitar", "synth stabs", "big gang chorus", "soaring guitar solos"], ["glossy 80s production"], ["high raspy male vocals"], ["hopeful", "anthemic"], ["autotune"]);
+    smA("Whitney Houston", [], ["pop r&b ballad"], ["polished 80s production", "big drum machine beat", "lush synths", "key change"], ["glossy 80s studio sheen"], ["powerful gospel-trained female vocals"], ["triumphant", "romantic"], ["heavy distortion"]);
+    smA("Lana Del Rey", [], ["baroque pop", "cinematic sad pop"], ["slow tempo", "lush strings", "reverb-soaked guitar", "hip hop drum loops"], ["hazy vintage cinematic production"], ["breathy low female vocals"], ["melancholic", "glamorous"], ["edm drops"]);
+    smA("The Weeknd", ["weeknd"], ["synthwave pop", "dark r&b"], ["retro synths", "pulsing bass", "gated reverb drums"], ["glossy 80s production"], ["high airy male vocals"], ["nocturnal", "nostalgic"], ["acoustic guitar"]);
+    smA("Tame Impala", [], ["psychedelic pop"], ["phaser-drenched drums", "fuzzy bass", "swirling synths"], ["lo-fi psychedelic production"], ["dreamy falsetto male vocals"], ["dreamy", "hazy"], ["heavy distortion"]);
+    smA("Linkin Park", [], ["nu metal", "rap rock"], ["heavy down-tuned guitars", "electronic scratches", "programmed beats"], ["tight polished heavy mix"], ["rapped verses with sung chorus", "screamed bridge"], ["angsty", "intense"], ["acoustic guitar"]);
+    smA("Green Day", [], ["pop punk"], ["fast power chords", "driving punk drums", "melodic bass"], ["raw punchy mix"], ["nasal melodic male vocals"], ["rebellious", "energetic"], ["synths"]);
+    smA("Ramones", [], ["punk rock"], ["fast downstroke power chords", "simple four-chord songs", "buzzsaw guitar", "straight fast drums"], ["raw lo-fi mix"], ["nasal shouted male vocals"], ["fun", "rebellious"], ["synths", "autotune"]);
+    smA("Bob Dylan", [], ["folk rock"], ["strummed acoustic guitar", "harmonica", "organ", "loose drums"], ["raw live feel"], ["nasal talking-singing male vocals"], ["poetic", "restless"], ["autotune", "synths"]);
+    smA("Journey", [], ["arena rock"], ["rolling piano", "soaring lead guitar", "big drums"], ["glossy 80s production"], ["powerful high male vocals"], ["hopeful", "anthemic"], ["autotune"]);
+    smA("a-ha", ["aha"], ["synth-pop", "new wave"], ["bright synth riffs", "drum machine", "bouncy bass"], ["crisp 80s production"], ["soaring falsetto male vocals"], ["euphoric", "bittersweet"], ["heavy distortion"]);
+    smA("The Killers", ["killers"], ["indie rock", "new wave rock"], ["driving arpeggiated guitar", "pulsing synths", "fast drums"], ["big shiny production"], ["earnest male vocals with anthemic choruses"], ["desperate", "euphoric"], ["autotune"]);
+    smA("The White Stripes", ["white stripes"], ["garage rock", "blues punk"], ["fuzzy raw guitar riffs", "stomping minimal drums", "two-piece band sound"], ["raw lo-fi mix"], ["raw wailing male vocals"], ["raw", "menacing"], ["synths", "autotune"]);
+    smA("Tears for Fears", [], ["new wave synth-pop"], ["shimmering clean guitar", "warm synth pads", "drum machine groove"], ["lush 80s production"], ["smooth male vocals"], ["wistful", "cool"], ["heavy distortion"]);
+    smA("Toto", [], ["soft rock", "yacht rock"], ["lush keyboards", "tight session-band groove", "smooth guitar"], ["polished 80s studio sound"], ["smooth male vocals with rich harmonies"], ["warm", "wistful"], ["heavy distortion"]);
+    smA("Chuck Berry", [], ["rock and roll"], ["double-stop guitar licks", "boogie piano", "shuffling backbeat"], ["vintage 50s mono sound"], ["brisk playful male vocals"], ["joyful", "cheeky"], ["synths", "autotune"]);
+
+    // ---------- Songs (artist must match a name above where possible) ----------
+    smS("Money for Nothing", "Dire Straits", "135 bpm", ["80s rock", "mid-tempo rock"], ["heavy mid-range guitar riff with a wah-like sweep", "synth intro with sparse drums", "driving backbeat drums", "keyboard stabs"], ["crunchy amp tone"], ["gruff laid-back male storytelling vocals", "high falsetto backing refrain"], ["wry", "satirical"], "rock");
+    smS("Sultans of Swing", "Dire Straits", "", ["blues rock", "pub rock"], ["fingerpicked clean stratocaster-style guitar", "flowing guitar fills", "long melodic guitar solo", "restrained steady drums"], ["clean bright guitar tone"], ["laid-back spoken-sung male vocals"], ["wry", "nostalgic"], "rock");
+    smS("Bohemian Rhapsody", "Queen", "", ["progressive rock opera", "theatrical rock"], ["piano ballad intro", "multi-tracked a cappella harmonies", "operatic mid-section", "hard rock guitar solo and heavy riff"], [], ["stacked operatic male harmonies"], ["dramatic", "epic"], "ballad");
+    smS("Another One Bites the Dust", "Queen", "110 bpm", ["funk rock", "disco rock"], ["repeating hypnotic bass riff", "dry tight drums", "sparse guitar stabs"], ["dry minimal production"], ["cool confident male vocals"], ["groovy", "menacing"], "short");
+    smS("Billie Jean", "Michael Jackson", "117 bpm", ["minimal funk pop", "r&b"], ["iconic repeating bass line", "crisp drum machine-like beat", "chorused guitar chords", "string stabs"], ["dry polished production"], ["smooth high male vocals with vocal hiccups"], ["tense", "groovy"], "pop");
+    smS("Smells Like Teen Spirit", "Nirvana", "117 bpm", ["grunge"], ["clean-to-distorted quiet-loud dynamics", "simple four-chord power chord riff", "loud crashing drums"], ["raw gritty mix"], ["raspy shouted male vocals"], ["angsty", "rebellious"], "rock");
+    smS("Back in Black", "AC/DC", "94 bpm", ["hard rock"], ["iconic crunchy riff", "steady backbeat drums", "simple bass"], ["raw loud amp tone"], ["high raspy male vocals"], ["swaggering"], "rock");
+    smS("Hotel California", "Eagles", "75 bpm", ["soft rock", "country rock"], ["twelve-string acoustic intro", "reggae-tinged groove", "dueling harmonized guitar solo"], [], ["smooth male vocals with tight harmonies"], ["mysterious", "hazy"], "ballad");
+    smS("Wonderwall", "Oasis", "87 bpm", ["britpop"], ["strummed capoed acoustic guitars", "cello and bass", "tambourine"], [], ["nasal sneering male vocals"], ["wistful", "anthemic"], "pop");
+    smS("Seven Nation Army", "The White Stripes", "124 bpm", ["garage rock"], ["monster riff on a detuned guitar that sounds like a bass", "stomping kick and snare", "minimal two-piece band sound"], ["raw lo-fi mix"], ["raw male vocals"], ["menacing"], "rock");
+    smS("Mr. Brightside", "The Killers", "148 bpm", ["indie rock", "new wave rock"], ["driving arpeggiated guitar riff", "pulsing synths", "fast drums"], [], ["earnest male vocals", "anthemic shouted chorus"], ["desperate", "euphoric"], "pop");
+    smS("Take On Me", "a-ha", "169 bpm", ["synth-pop"], ["bright synth riff", "drum machine", "bouncy bass"], [], ["soaring falsetto male vocals"], ["euphoric"], "pop");
+    smS("Don't Stop Believin'", "Journey", "119 bpm", ["arena rock"], ["rolling piano riff intro", "soaring guitar", "big drums"], [], ["powerful high male vocals"], ["hopeful", "anthemic"], "pop");
+    smS("Sweet Child O' Mine", "Guns N' Roses", "125 bpm", ["hard rock"], ["looping melodic guitar intro riff", "long bluesy guitar solo"], [], ["high screaming male vocals", "pleading verses"], ["romantic", "gritty"], "rock");
+    smS("Enter Sandman", "Metallica", "123 bpm", ["heavy metal"], ["clean spooky guitar intro building into a heavy palm-muted riff", "tom-driven drums"], [], ["gruff menacing male vocals"], ["ominous"], "rock");
+    smS("Get Lucky", "Daft Punk", "116 bpm", ["disco funk"], ["clean funk guitar riff", "warm groovy bass", "live drum groove"], ["warm polished production"], ["smooth male vocals with vocoder touches", "vocal harmonies"], ["feel-good"], "pop");
+    smS("One More Time", "Daft Punk", "123 bpm", ["french house"], ["filtered disco chords", "four-on-the-floor kick", "side-chained bass"], [], ["heavily processed autotuned vocals"], ["euphoric"], "edm");
+    smS("Blinding Lights", "The Weeknd", "171 bpm", ["80s synthwave pop"], ["pulsing arpeggiated synth bass", "gated reverb drums", "bright synth lead"], [], ["high male vocals"], ["urgent", "nostalgic"], "pop");
+    smS("Rolling in the Deep", "Adele", "105 bpm", ["soul pop"], ["stomping kick and tambourine", "driving acoustic guitar", "gospel-style backing vocals", "piano"], [], ["powerful raspy female vocals"], ["angry", "defiant"], "pop");
+    smS("Shape of You", "Ed Sheeran", "96 bpm", ["tropical house pop"], ["marimba loop", "deep bass", "light percussion"], [], ["rhythmic male vocals"], ["flirty", "upbeat"], "pop");
+    smS("bad guy", "Billie Eilish", "135 bpm", ["minimal electropop"], ["deep sub bass", "sparse finger-snap beat"], [], ["whispered breathy female vocals"], ["playful", "sinister"], "short");
+    smS("Uptown Funk", "Mark Ronson", "115 bpm", ["funk pop"], ["tight brass section", "funk guitar", "handclaps", "punchy drums"], [], ["confident male lead vocals with call-and-response"], ["swaggering", "party"], "pop");
+    smS("Stayin' Alive", "Bee Gees", "104 bpm", ["disco"], ["tight funky guitar chops", "steady four-on-the-floor beat", "strings"], [], ["falsetto male harmonies"], ["strutting"], "pop");
+    smS("Dancing Queen", "ABBA", "100 bpm", ["disco pop"], ["rippling piano glissando", "shimmering strings", "layered female harmonies"], [], ["bright female vocals"], ["joyful"], "pop");
+    smS("Three Little Birds", "Bob Marley", "74 bpm", ["reggae"], ["offbeat guitar skank", "one-drop drums", "warm bass", "female backing vocals"], [], ["soulful relaxed male vocals"], ["reassuring", "sunny"], "short");
+    smS("Ring of Fire", "Johnny Cash", "", ["country", "mariachi-tinged country"], ["mariachi trumpets", "boom-chicka-boom guitar rhythm", "acoustic guitar"], [], ["deep baritone male vocals"], ["passionate"], "short");
+    smS("Everybody Wants to Rule the World", "Tears for Fears", "112 bpm", ["new wave synth-pop"], ["shimmering clean guitar riff", "warm synth pads", "steady drum machine groove"], [], ["smooth male vocals"], ["wistful", "cool"], "pop");
+    smS("Africa", "Toto", "93 bpm", ["soft rock"], ["marimba-like synth riff", "tribal percussion", "lush choir-like harmonies"], [], ["smooth male vocals"], ["wistful", "warm"], "pop");
+    smS("Livin' on a Prayer", "Bon Jovi", "123 bpm", ["arena rock"], ["talkbox guitar intro", "synth stabs", "big gang chorus", "key change"], [], ["high raspy male vocals"], ["hopeful", "anthemic"], "rock");
+    smS("Creep", "Radiohead", "92 bpm", ["alternative rock"], ["arpeggiated clean guitar", "crunching guitar stabs before the chorus", "loud-quiet dynamics"], [], ["fragile falsetto male vocals"], ["self-loathing", "melancholic"], "ballad");
+    smS("Wish You Were Here", "Pink Floyd", "", ["psychedelic folk rock"], ["radio-filtered acoustic guitar intro", "slide guitar", "soft piano"], [], ["calm male vocals"], ["wistful"], "ballad");
+    smS("Time", "Hans Zimmer", "", ["cinematic ambient"], ["ticking clock motif", "slow-building organ and piano loop", "swelling strings"], [], [], ["emotional", "epic"], "ballad");
+    smS("Come Together", "The Beatles", "82 bpm", ["swampy blues rock"], ["sparse swampy bass riff", "shuffling drums", "electric piano"], [], ["whispery male vocals"], ["mysterious", "cool"], "short");
+    smS("Hey Jude", "The Beatles", "", ["piano pop ballad"], ["piano", "building orchestral outro", "long sing-along coda"], [], ["warm male vocals", "gang singalong outro"], ["comforting", "uplifting"], "ballad");
+    smS("Johnny B. Goode", "Chuck Berry", "168 bpm", ["rock and roll"], ["double-stop guitar licks", "boogie piano", "shuffling backbeat"], [], ["brisk male vocals"], ["joyful"], "short");
+    smS("Paranoid", "Black Sabbath", "", ["heavy metal"], ["fast riff-driven heavy guitar", "pounding drums", "short punchy arrangement"], [], ["nasal male vocals"], ["frantic"], "short");
+
+    // ---------- Matching ----------
+    function smNorm(s) {
+      return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/&/g, ' and ').replace(/['’]/g, '').replace(/[^a-z0-9 ]+/g, ' ')
+        .replace(/\s+/g, ' ').trim().replace(/^the /, '');
+    }
+    function smKey(s) { return smNorm(s).replace(/ /g, ''); }
+
+    SM_ARTISTS.forEach(a => { a._n = Array.from(new Set([a.name].concat(a.aliases).map(smKey))); });
+    SM_SONGS.forEach(s => { s._n = Array.from(new Set([s.title].concat(s.aliases).map(smKey))); s._a = smKey(s.artist); });
+
+    function smLev(a, b) {
+      const m = a.length, n = b.length;
+      if (!m) return n;
+      if (!n) return m;
+      let prev = Array.from({ length: n + 1 }, (_, j) => j);
+      for (let i = 1; i <= m; i++) {
+        const cur = [i];
+        for (let j = 1; j <= n; j++) {
+          cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+        }
+        prev = cur;
+      }
+      return prev[n];
+    }
+
+    function smFind(query, items) {
+      const q = smKey(query);
+      if (!q) return null;
+      for (const it of items) if (it._n.some(n => n === q)) return { item: it, how: 'exact' };
+      if (q.length >= 4) {
+        for (const it of items) if (it._n.some(n => n.length >= 4 && (n.includes(q) || q.includes(n)))) return { item: it, how: 'partial' };
+      }
+      let best = null, bestD = 99;
+      for (const it of items) {
+        for (const n of it._n) {
+          const d = smLev(q, n);
+          const lim = Math.max(1, Math.floor(Math.max(q.length, n.length) / 5));
+          if (d <= lim && d < bestD) { bestD = d; best = it; }
+        }
+      }
+      return best ? { item: best, how: 'fuzzy' } : null;
+    }
+
+    function smUnique(list) {
+      const seen = new Set();
+      return list.filter(x => { const k = x.trim().toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+    }
+
+    // Merge the song's specifics on top of the artist's overall sound
+    function smBuild(artist, song) {
+      const groups = { g: [], bpm: [], v: [], i: [], t: [], m: [] };
+      const addAll = (key, list) => { groups[key] = smUnique(groups[key].concat(list || [])); };
+      if (song) {
+        addAll('g', song.g);
+        if (song.bpm) addAll('bpm', [song.bpm]);
+        addAll('v', song.v); addAll('i', song.i); addAll('t', song.t); addAll('m', song.m);
+      }
+      if (artist) {
+        addAll('g', artist.g); addAll('v', artist.v); addAll('i', artist.i); addAll('t', artist.t); addAll('m', artist.m);
+      }
+      // Keep it tight: overlapping tags dilute a prompt more than they help
+      groups.g = groups.g.slice(0, 3);
+      groups.v = groups.v.slice(0, 2);
+      groups.i = groups.i.slice(0, 4);
+      groups.t = groups.t.slice(0, 2);
+      groups.m = groups.m.slice(0, 2);
+      const exclude = smUnique([].concat(song ? song.x : [], artist ? artist.x : []));
+      return { groups, exclude };
+    }
+
+    // Take tags round-robin across groups until the character budget is used
+    function smPick(groups, budget) {
+      const order = ['g', 'bpm', 'v', 'i', 't', 'm'];
+      const idx = { g: 0, bpm: 0, v: 0, i: 0, t: 0, m: 0 };
+      const chosen = [];
+      let len = 0, progress = true;
+      while (progress) {
+        progress = false;
+        for (const k of order) {
+          const arr = groups[k];
+          if (idx[k] >= arr.length) continue;
+          const tag = arr[idx[k]++];
+          const add = (chosen.length ? 2 : 0) + tag.length;
+          if (len + add <= budget) { chosen.push({ tag, group: k }); len += add; progress = true; }
+          else idx[k] = arr.length;
+        }
+      }
+      return chosen;
+    }
+    // ==PURE-END==
+
+    // ---------- UI ----------
+    const SM_RANK = { g: 0, bpm: 1, i: 2, t: 3, v: 4, m: 5 };
+
+    function smEl(tag, cls, text) {
+      const e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (text !== undefined) e.textContent = text;
+      return e;
+    }
+
+    function smFillLists() {
+      const al = el('sm-artist-list');
+      al.innerHTML = '';
+      SM_ARTISTS.slice().sort((a, b) => a.name.localeCompare(b.name)).forEach(a => {
+        const o = document.createElement('option'); o.value = a.name; al.appendChild(o);
+      });
+      smFillSongList('');
+    }
+
+    function smFillSongList(artistText) {
+      const sl = el('sm-song-list');
+      sl.innerHTML = '';
+      let songs = SM_SONGS;
+      const hit = artistText.trim() ? smFind(artistText, SM_ARTISTS) : null;
+      if (hit) {
+        const own = SM_SONGS.filter(s => s._a === hit.item._n[0]);
+        if (own.length) songs = own;
+      }
+      songs.slice().sort((a, b) => a.title.localeCompare(b.title)).forEach(s => {
+        const o = document.createElement('option'); o.value = s.title; o.label = s.artist; sl.appendChild(o);
+      });
+    }
+
+    function smNote(parent, text) {
+      const p = smEl('p', 'text-[11px] text-amber-300 flex items-start gap-1.5');
+      p.appendChild(smEl('i', 'fa-solid fa-circle-info mt-0.5 text-amber-400'));
+      p.appendChild(smEl('span', '', text));
+      parent.appendChild(p);
+    }
+
+    function smHelperPrompt(aq, sq) {
+      const subject = sq ? ('the song "' + sq + '"' + (aq ? ' by ' + aq : '')) : ('the sound of ' + aq);
+      return 'Describe the sound of ' + subject + ' as a Suno style prompt WITHOUT using the artist or song name. ' +
+        'Give comma-separated tags covering: genre and era, tempo (BPM), key instruments and guitar/synth tones, drum feel, ' +
+        'production style, vocal type and mood. Keep it under 300 characters. Do not include any lyrics.';
+    }
+
+    function smNotFound(aq, sq) {
+      const out = el('sm-result');
+      out.innerHTML = '';
+      const box = smEl('div', 'rounded-xl border border-slate-800 bg-slate-950/60 p-3 flex flex-col gap-2');
+      box.appendChild(smEl('p', 'text-xs text-slate-300',
+        "That one isn't in the built-in library yet (" + SM_ARTISTS.length + ' artists, ' + SM_SONGS.length + ' songs). ' +
+        'Start typing to see suggestions, or copy the helper below into any AI chat to get a name-free description you can paste into the custom tag box.'));
+      const btn = smEl('button', 'self-start text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors');
+      btn.type = 'button';
+      btn.textContent = 'Copy AI helper prompt';
+      btn.onclick = () => executeCopy(smHelperPrompt(aq, sq), 'Helper prompt copied!');
+      box.appendChild(btn);
+      out.appendChild(box);
+    }
+
+    function runSoundMatch() {
+      const aq = el('sm-artist').value.trim();
+      const sq = el('sm-song').value.trim();
+      const out = el('sm-result');
+      out.innerHTML = '';
+      if (!aq && !sq) { showToast('Enter an artist, a song, or both'); return; }
+
+      const aHit = aq ? smFind(aq, SM_ARTISTS) : null;
+      let sHit = null;
+      if (sq) {
+        if (aHit) {
+          const own = SM_SONGS.filter(s => s._a === aHit.item._n[0]);
+          sHit = smFind(sq, own) || smFind(sq, SM_SONGS);
+        } else {
+          sHit = smFind(sq, SM_SONGS);
+        }
+      }
+      const song = sHit ? sHit.item : null;
+      let artist = aHit ? aHit.item : null;
+      if (!artist && song) artist = SM_ARTISTS.find(a => a._n[0] === song._a) || null;
+      if (!artist && !song) { smNotFound(aq, sq); return; }
+
+      const notes = [];
+      if (aq && !aHit) notes.push('Artist "' + aq + '" is not in the library, so only the song was used.');
+      if (sq && !sHit) notes.push('Song "' + sq + '" is not in the library, so the artist\'s overall sound was used.');
+      if (aHit && aHit.how === 'fuzzy') notes.push('Artist matched to "' + aHit.item.name + '".');
+      if (sHit && sHit.how === 'fuzzy') notes.push('Song matched to "' + sHit.item.title + '".');
+      if (song && aHit && song._a !== aHit.item._n[0]) notes.push('"' + song.title + '" is by ' + song.artist + ' in the library, so both sounds were blended.');
+
+      const built = smBuild(artist, song);
+      const fullLen = smPick(built.groups, 100000).map(c => c.tag).join(', ').length;
+      let switched = false;
+      if (fullLen > STYLE_LIMITS.short.target && el('length-mode').value === 'short') {
+        el('length-mode').value = 'detailed';
+        switched = true;
+      }
+      const budget = STYLE_LIMITS[el('length-mode').value].target;
+      const chosen = smPick(built.groups, budget);
+
+      chosen.forEach(c => {
+        const k = norm(c.tag);
+        if (TAG_RANK[k] === undefined) TAG_RANK[k] = SM_RANK[c.group];
+      });
+      if (el('sm-replace').checked) { selectedChips = new Set(); excludedChips = new Set(); }
+      chosen.forEach(c => selectedChips.add(norm(c.tag)));
+      built.exclude.forEach(x => excludedChips.add(norm(x)));
+      syncUIFromChips();
+      syncExclude();
+
+      if (switched) notes.push('Switched to Detailed length so more of the sound fits.');
+      if (chosen.length < smPick(built.groups, 100000).length) notes.push('Some detail was trimmed to fit the length limit. Raise STYLE_LIMITS if Suno allows more.');
+
+      const box = smEl('div', 'rounded-xl border border-cyan-500/20 bg-slate-950/60 p-3 flex flex-col gap-2');
+      const names = [];
+      if (artist) names.push(artist.name);
+      if (song) names.push(song.title);
+      box.appendChild(smEl('p', 'text-xs text-slate-300', 'Matched (for you only, never put in the prompt): ' + names.join(' - ')));
+      const promptText = compileOrder().join(', ');
+      box.appendChild(smEl('p', 'text-xs font-mono text-cyan-200 leading-relaxed break-words', promptText));
+      box.appendChild(smEl('p', 'text-[11px] text-slate-500', 'Applied to the Style box below (' + promptText.length + ' chars). Tweak any chip, then copy.'));
+      notes.forEach(n => smNote(box, n));
+      if (song && song.layout && LAYOUTS[song.layout]) {
+        const b = smEl('button', 'self-start text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors');
+        b.type = 'button';
+        b.textContent = 'Insert a ' + LAYOUTS[song.layout].label + ' lyric layout';
+        b.onclick = () => insertTemplateSkeleton(song.layout);
+        box.appendChild(b);
+      }
+      out.appendChild(box);
+      showToast('Sound matched');
+    }
+
+    function clearSoundMatch() {
+      el('sm-artist').value = '';
+      el('sm-song').value = '';
+      el('sm-result').innerHTML = '';
+      smFillSongList('');
+    }
+
+    // Warn if a known artist or song name ends up in the style prompt
+    const SM_NAME_LIST = [];
+    SM_ARTISTS.forEach(a => [a.name].concat(a.aliases).forEach(n => { if (smNorm(n).length >= 5) SM_NAME_LIST.push({ shown: a.name, n: smNorm(n) }); }));
+    SM_SONGS.forEach(s => { if (smNorm(s.title).split(' ').length >= 2) SM_NAME_LIST.push({ shown: s.title, n: smNorm(s.title) }); });
+
+    const smOrigWarn = updateStyleWarnings;
+    updateStyleWarnings = function () {
+      smOrigWarn();
+      const padded = ' ' + smNorm(el('compiled-prompt').value) + ' ';
+      const hits = SM_NAME_LIST.filter(x => padded.includes(' ' + x.n + ' ')).map(x => x.shown);
+      const uniq = Array.from(new Set(hits));
+      if (uniq.length) {
+        const p = document.createElement('p');
+        p.className = 'text-[11px] text-rose-300 flex items-start gap-1.5';
+        const icon = document.createElement('i');
+        icon.className = 'fa-solid fa-triangle-exclamation mt-0.5 text-rose-400';
+        const span = document.createElement('span');
+        span.textContent = 'Looks like a real artist or song name (' + uniq.join(', ') + '). Suno may reject it. Use Sound Match to describe the sound instead.';
+        p.appendChild(icon);
+        p.appendChild(span);
+        el('style-warnings').appendChild(p);
+      }
+    };
+
+    smFillLists();
+    el('sm-artist').addEventListener('input', e => smFillSongList(e.target.value));
+    ['sm-artist', 'sm-song'].forEach(id => el(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); runSoundMatch(); }
+    }));
   </script>
 </body>
 </html>
