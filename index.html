@@ -3,368 +3,339 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SunoVault Studio - Personal AI Music Vault & Prompt Deck</title>
+  <title>Suno Prompt & Lyric Metatag Studio</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
-          colors: {
-            brand: {
-              violet: '#8b5cf6',
-              cyan: '#06b6d4',
-              emerald: '#10b981',
-              pink: '#ec4899',
-              dark: '#090d16',
-              panel: '#0f172a',
-              card: '#131e33',
-              border: '#1e293b'
-            }
-          },
           fontFamily: {
-            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            suno: {
+              50: '#f5f3ff',
+              400: '#a78bfa',
+              500: '#8b5cf6',
+              600: '#7c3aed',
+              accent: '#06b6d4',
+              highlight: '#f43f5e'
+            }
           }
         }
       }
     }
   </script>
+
   <style>
-    /* Custom Scrollbar */
+    /* Custom scrollbars */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
     }
     ::-webkit-scrollbar-track {
-      background: #090d16;
+      background: #0f172a;
     }
     ::-webkit-scrollbar-thumb {
-      background: #25334c;
-      border-radius: 9999px;
+      background: #334155;
+      border-radius: 4px;
     }
     ::-webkit-scrollbar-thumb:hover {
-      background: #8b5cf6;
+      background: #475569;
     }
-
-    /* Glow utilities */
-    .glow-cyan {
-      box-shadow: 0 0 20px -3px rgba(6, 182, 212, 0.35);
-    }
-    .glow-violet {
-      box-shadow: 0 0 20px -3px rgba(139, 92, 246, 0.35);
-    }
-
-    /* Animated pulse background */
-    @keyframes subtleGradient {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    .animated-bg {
-      background-size: 200% 200%;
-      animation: subtleGradient 15s ease infinite;
-    }
-
-    /* Range slider custom styling */
-    input[type=range] {
-      accent-color: #8b5cf6;
+    .chip-active {
+      background: rgba(139, 92, 246, 0.22) !important;
+      border-color: #8b5cf6 !important;
+      color: #ddd6fe !important;
+      box-shadow: 0 0 10px rgba(139, 92, 246, 0.25);
     }
   </style>
 </head>
-<body class="bg-brand-dark text-slate-100 font-sans min-h-screen flex flex-col selection:bg-brand-violet selection:text-white pb-28">
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col selection:bg-violet-600 selection:text-white">
 
-  <!-- ================= TOP NAVIGATION HEADER ================= -->
-  <header class="sticky top-0 z-40 bg-brand-panel/90 backdrop-blur-md border-b border-brand-border px-4 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
-    <!-- Brand / Logo -->
-    <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('vault')">
-      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-violet via-fuchsia-600 to-brand-cyan flex items-center justify-center shadow-lg shadow-brand-violet/25 ring-1 ring-white/20">
-        <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M9 18V5l12-2v13"></path>
-          <circle cx="6" cy="18" r="3"></circle>
-          <circle cx="18" cy="16" r="3"></circle>
-        </svg>
-      </div>
-      <div>
-        <div class="flex items-center gap-2">
-          <span class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">SunoVault</span>
-          <span class="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded bg-brand-violet/20 text-brand-violet border border-brand-violet/30">Studio</span>
-        </div>
-        <p class="text-[11px] text-slate-400">AI Track Deck & Prompt Engine</p>
-      </div>
+  <!-- Toast Notification Container -->
+  <div id="toast" class="fixed top-5 right-5 z-50 transform -translate-y-16 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-3 bg-slate-900/95 border border-violet-500/50 text-white px-5 py-3 rounded-xl shadow-2xl shadow-violet-950/50 backdrop-blur-md">
+    <div class="w-7 h-7 rounded-full bg-violet-600/30 text-violet-400 flex items-center justify-center text-sm">
+      <i class="fa-solid fa-check"></i>
     </div>
+    <span id="toast-message" class="text-sm font-medium">Copied to clipboard</span>
+  </div>
 
-    <!-- Center Navigation Tabs -->
-    <nav class="flex items-center bg-brand-card/90 p-1 rounded-xl border border-brand-border text-xs font-medium">
-      <button onclick="switchTab('vault')" id="tab-btn-vault" class="px-4 py-2 rounded-lg transition-all flex items-center gap-2 bg-brand-violet text-white shadow-sm font-semibold">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-        Music Vault
-      </button>
-      <button onclick="switchTab('studio')" id="tab-btn-studio" class="px-4 py-2 rounded-lg transition-all flex items-center gap-2 text-slate-400 hover:text-white">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
-        Prompt Studio
-      </button>
-      <button onclick="switchTab('sync')" id="tab-btn-sync" class="px-4 py-2 rounded-lg transition-all flex items-center gap-2 text-slate-400 hover:text-white">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-        Export &amp; Sync
-      </button>
-    </nav>
+  <!-- Header -->
+  <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-lg sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-cyan-400 p-[1px] shadow-lg shadow-violet-600/20">
+          <div class="w-full h-full bg-slate-950 rounded-[11px] flex items-center justify-center text-violet-400">
+            <i class="fa-solid fa-compact-disc text-xl animate-[spin_10s_linear_infinite]"></i>
+          </div>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+            Suno Studio Companion
+            <span class="text-xs px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20 font-mono font-medium">Prompt & Metatag Architect</span>
+          </h1>
+          <p class="text-xs text-slate-400">Craft optimized style prompts and structured lyric sheets for Suno AI</p>
+        </div>
+      </div>
 
-    <!-- Right Actions -->
-    <div class="flex items-center gap-3">
-      <button onclick="openAddModal()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-brand-cyan to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md shadow-brand-cyan/20 transition-all transform active:scale-95">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-        <span>+ Add Track</span>
-      </button>
+      <!-- Quick Preset Selector & Reset -->
+      <div class="flex items-center gap-2">
+        <label for="template-select" class="text-xs text-slate-400 font-medium hidden sm:inline">Load Preset:</label>
+        <select id="template-select" onchange="loadPreset(this.value)" class="bg-slate-800/90 border border-slate-700/80 text-xs text-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-violet-500 transition-colors">
+          <option value="">-- Choose Recipe --</option>
+          <option value="synthwave">80s Neon Synthwave</option>
+          <option value="indiefolk">Intimate Indie Folk</option>
+          <option value="cyberpunk">Cyberpunk Industrial</option>
+          <option value="boombap">90s Jazzy Boom Bap</option>
+          <option value="citypop">Tokyo City Pop</option>
+          <option value="progmetal">Modern Djent Metal</option>
+        </select>
+        <button onclick="resetAll()" class="p-1.5 px-2.5 rounded-lg text-xs bg-slate-800/80 hover:bg-rose-950/40 text-slate-400 hover:text-rose-300 border border-slate-700/60 hover:border-rose-500/30 transition-all" title="Clear All">
+          <i class="fa-solid fa-arrow-rotate-left mr-1"></i> Reset
+        </button>
+      </div>
     </div>
   </header>
 
-  <!-- ================= MAIN CONTAINER ================= -->
-  <main class="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-8">
+  <!-- Main Workstation Layout -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-    <!-- ================= VIEW 1: MUSIC VAULT & PLAYER ================= -->
-    <section id="view-vault" class="space-y-6">
-      
-      <!-- Top Bar: Filter, Search, Quick Stats -->
-      <div class="bg-brand-panel border border-brand-border rounded-2xl p-4 lg:p-5 shadow-lg space-y-4">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <!-- Search input -->
+    <!-- LEFT COLUMN: Style Prompt Builder (5 cols) -->
+    <section class="lg:col-span-5 flex flex-col gap-5">
+
+      <!-- Style Engine Card -->
+      <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-sliders text-violet-400 text-sm"></i>
+            <h2 class="text-sm font-semibold tracking-wide uppercase text-slate-300">Style Generator</h2>
+          </div>
+          <span class="text-xs text-slate-400">Click tags to toggle</span>
+        </div>
+
+        <!-- Custom tag addition input -->
+        <div class="flex items-center gap-2">
           <div class="relative flex-1">
-            <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-            <input type="text" id="vault-search-input" oninput="filterTracks()" placeholder="Search title, collaborator, genre tag, lyrics..." class="w-full pl-10 pr-4 py-2 bg-brand-card/90 border border-brand-border rounded-xl text-sm focus:outline-none focus:border-brand-violet text-slate-200 placeholder-slate-500">
+            <i class="fa-solid fa-tag absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+            <input type="text" id="custom-tag-input" placeholder="Type custom tag & press Enter (e.g. 110 BPM, slap bass)"
+                   class="w-full bg-slate-950/80 border border-slate-800 text-xs text-slate-200 rounded-xl pl-8 pr-3 py-2 focus:outline-none focus:border-violet-500 placeholder-slate-500 transition-all">
           </div>
-
-          <!-- Quick Filters: Collaborator & Genre -->
-          <div class="flex flex-wrap items-center gap-2">
-            <select id="filter-collaborator" onchange="filterTracks()" class="bg-brand-card border border-brand-border rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-brand-violet">
-              <option value="all">All Collaborators</option>
-            </select>
-            <select id="filter-genre" onchange="filterTracks()" class="bg-brand-card border border-brand-border rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-brand-violet">
-              <option value="all">All Genres</option>
-            </select>
-            <button onclick="resetFilters()" class="text-xs text-slate-400 hover:text-brand-cyan transition px-2 py-1">Reset</button>
-          </div>
+          <button onclick="addCustomTagFromInput()" class="bg-violet-600 hover:bg-violet-500 text-white rounded-xl px-3 py-2 text-xs font-medium transition-colors shadow-sm shadow-violet-600/30">
+            Add
+          </button>
         </div>
 
-        <!-- Quick Stats Pill Row -->
-        <div class="flex flex-wrap items-center justify-between text-xs text-slate-400 pt-2 border-t border-brand-border/60">
-          <div class="flex items-center gap-4">
-            <span>Library: <strong id="stat-track-count" class="text-white">0</strong> tracks</span>
-            <span>Collaborators: <strong id="stat-collab-count" class="text-brand-cyan">0</strong></span>
-            <span>Average BPM: <strong id="stat-avg-bpm" class="text-brand-violet">0</strong></span>
+        <!-- Tag Category Groups -->
+        <div class="space-y-4 max-h-[380px] overflow-y-auto pr-1">
+
+          <!-- Genres -->
+          <div>
+            <div class="text-[11px] font-semibold uppercase text-slate-400 mb-1.5 flex items-center gap-1.5">
+              <i class="fa-solid fa-record-vinyl text-[10px] text-cyan-400"></i> Primary Genre
+            </div>
+            <div class="flex flex-wrap gap-1.5" id="group-genre">
+              <!-- Rendered via JS -->
+            </div>
           </div>
-          <div class="text-[11px] text-slate-500 hidden sm:block">
-            Tip: Click <span class="text-brand-cyan">"Send to Studio"</span> on any card to remix its tags.
+
+          <!-- Tempo & Rhythm -->
+          <div>
+            <div class="text-[11px] font-semibold uppercase text-slate-400 mb-1.5 flex items-center gap-1.5">
+              <i class="fa-solid fa-stopwatch text-[10px] text-amber-400"></i> Tempo & Meter
+            </div>
+            <div class="flex flex-wrap gap-1.5" id="group-tempo"></div>
           </div>
+
+          <!-- Key Instrumentation -->
+          <div>
+            <div class="text-[11px] font-semibold uppercase text-slate-400 mb-1.5 flex items-center gap-1.5">
+              <i class="fa-solid fa-guitar text-[10px] text-emerald-400"></i> Instrumentation
+            </div>
+            <div class="flex flex-wrap gap-1.5" id="group-instruments"></div>
+          </div>
+
+          <!-- Production & Texture Descriptors -->
+          <div>
+            <div class="text-[11px] font-semibold uppercase text-slate-400 mb-1.5 flex items-center gap-1.5">
+              <i class="fa-solid fa-wand-magic-sparkles text-[10px] text-violet-400"></i> Texture & Production
+            </div>
+            <div class="flex flex-wrap gap-1.5" id="group-texture"></div>
+          </div>
+
+          <!-- Mood & Vocal Tone -->
+          <div>
+            <div class="text-[11px] font-semibold uppercase text-slate-400 mb-1.5 flex items-center gap-1.5">
+              <i class="fa-solid fa-heart-pulse text-[10px] text-rose-400"></i> Mood & Vocal Tone
+            </div>
+            <div class="flex flex-wrap gap-1.5" id="group-mood"></div>
+          </div>
+
         </div>
       </div>
 
-      <!-- Tracks Grid Container -->
-      <div id="tracks-grid" class="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <!-- Rendered dynamically via JavaScript -->
-      </div>
-
-      <!-- Empty State -->
-      <div id="vault-empty-state" class="hidden text-center py-16 px-4 bg-brand-panel/40 border border-dashed border-brand-border rounded-2xl">
-        <div class="w-16 h-16 rounded-full bg-brand-card flex items-center justify-center mx-auto text-slate-500 mb-3">
-          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+      <!-- Compiled Style Prompt Card -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-terminal text-cyan-400 text-sm"></i>
+            <h2 class="text-sm font-semibold tracking-wide uppercase text-slate-300">Style of Music Prompt</h2>
+          </div>
+          <!-- Char Counter -->
+          <div class="flex items-center gap-1.5 text-xs font-mono">
+            <span id="char-count" class="font-bold text-cyan-400">0</span>
+            <span class="text-slate-500">/ 120 chars target</span>
+          </div>
         </div>
-        <h3 class="text-base font-bold text-white">No tracks match your query</h3>
-        <p class="text-xs text-slate-400 mt-1">Try resetting the search filter or add a fresh Suno track.</p>
-        <button onclick="resetFilters()" class="mt-4 px-4 py-2 bg-brand-card hover:bg-brand-border rounded-xl text-xs font-semibold text-brand-cyan transition">Clear Filters</button>
-      </div>
 
-    </section>
+        <!-- Progress bar for 120 target / 200 max -->
+        <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+          <div id="char-progress" class="h-full bg-cyan-400 transition-all duration-200" style="width: 0%"></div>
+        </div>
 
-    <!-- ================= VIEW 2: PROMPT STUDIO & GENERATOR ================= -->
-    <section id="view-studio" class="hidden space-y-6">
+        <div class="relative">
+          <textarea id="compiled-prompt" rows="3"
+                    oninput="handlePromptDirectEdit(this.value)"
+                    placeholder="Selected chips will appear here, or type freely..."
+                    class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-xl p-3 text-xs sm:text-sm font-mono leading-relaxed focus:outline-none focus:border-cyan-400 transition-all resize-none"></textarea>
+        </div>
 
-      <!-- Studio Header Banner -->
-      <div class="bg-gradient-to-r from-brand-violet/20 via-brand-panel to-brand-cyan/20 border border-brand-border rounded-2xl p-6 relative overflow-hidden">
-        <div class="max-w-2xl">
-          <span class="text-[10px] uppercase font-mono tracking-widest px-2 py-0.5 rounded bg-brand-violet/30 text-brand-violet border border-brand-violet/50">Suno v3.5 / v4 Prompt Matrix</span>
-          <h2 class="text-xl lg:text-2xl font-black tracking-tight text-white mt-2">Modular Prompt Engine &amp; Lyric Structurer</h2>
-          <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-            Mix and match sonic tags to craft airtight style prompts for Suno. Click any chip to toggle it into your assembled prompt box, inject lyric section tags, then export directly into your vault.
+        <div class="flex items-center justify-between pt-1">
+          <p class="text-[11px] text-slate-400">
+            <i class="fa-solid fa-circle-info mr-1 text-slate-500"></i>
+            Suno yields best style fidelity under 120 characters.
           </p>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-        <!-- Left Column: Tag Selector Matrix (7 cols) -->
-        <div class="lg:col-span-7 space-y-5">
-          <div class="bg-brand-panel border border-brand-border rounded-2xl p-5 shadow-lg space-y-5">
-            <div class="flex items-center justify-between pb-3 border-b border-brand-border">
-              <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-brand-cyan"></span>
-                Suno Tag Matrix
-              </h3>
-              <button onclick="clearAllPromptTags()" class="text-xs text-slate-400 hover:text-rose-400 transition">Clear All Chips</button>
-            </div>
-
-            <!-- Category: Genre Spine -->
-            <div>
-              <span class="text-[11px] font-mono uppercase tracking-wider text-brand-cyan font-semibold block mb-2">1. Genre Spine</span>
-              <div class="flex flex-wrap gap-1.5" id="tag-group-genre"></div>
-            </div>
-
-            <!-- Category: Vocal Styling -->
-            <div>
-              <span class="text-[11px] font-mono uppercase tracking-wider text-brand-violet font-semibold block mb-2">2. Vocal Style &amp; Delivery</span>
-              <div class="flex flex-wrap gap-1.5" id="tag-group-vocal"></div>
-            </div>
-
-            <!-- Category: Instruments & Production -->
-            <div>
-              <span class="text-[11px] font-mono uppercase tracking-wider text-brand-emerald font-semibold block mb-2">3. Instruments &amp; Texture</span>
-              <div class="flex flex-wrap gap-1.5" id="tag-group-instrument"></div>
-            </div>
-
-            <!-- Category: Mood & Atmosphere -->
-            <div>
-              <span class="text-[11px] font-mono uppercase tracking-wider text-brand-pink font-semibold block mb-2">4. Mood &amp; Atmosphere</span>
-              <div class="flex flex-wrap gap-1.5" id="tag-group-mood"></div>
-            </div>
-
-            <!-- Category: Rhythm & Tempo -->
-            <div>
-              <span class="text-[11px] font-mono uppercase tracking-wider text-amber-400 font-semibold block mb-2">5. Tempo &amp; Rhythm</span>
-              <div class="flex flex-wrap gap-1.5" id="tag-group-tempo"></div>
-            </div>
-
-            <!-- Custom Tag Adder -->
-            <div class="pt-2 border-t border-brand-border flex gap-2">
-              <input type="text" id="custom-tag-input" placeholder="Add custom tag (e.g. tape saturation, 8-bit lead)..." class="flex-1 bg-brand-card border border-brand-border rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-brand-violet" onkeydown="if(event.key==='Enter') addCustomTag()">
-              <button onclick="addCustomTag()" class="px-3 py-1.5 bg-brand-card hover:bg-brand-border text-brand-cyan border border-brand-border rounded-xl text-xs font-semibold transition">+ Add</button>
-            </div>
+          <div class="flex items-center gap-2">
+            <button onclick="clearStyleChips()" class="text-xs text-slate-400 hover:text-slate-200 px-2.5 py-1.5 rounded-lg hover:bg-slate-800 transition-colors">
+              Clear
+            </button>
+            <button onclick="copyStylePrompt()" class="bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md shadow-cyan-950/40">
+              <i class="fa-regular fa-copy"></i>
+              Copy Style
+            </button>
           </div>
         </div>
-
-        <!-- Right Column: Assembled Prompt & Lyric Builder (5 cols) -->
-        <div class="lg:col-span-5 space-y-5">
-
-          <!-- Assembled Style Prompt Box -->
-          <div class="bg-brand-panel border border-brand-border rounded-2xl p-5 shadow-lg space-y-3">
-            <div class="flex items-center justify-between">
-              <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-brand-violet"></span>
-                Assembled Style Prompt
-              </h3>
-              <span id="prompt-char-counter" class="text-xs font-mono text-slate-400">0 / 120 chars</span>
-            </div>
-
-            <textarea id="assembled-prompt-text" rows="4" class="w-full bg-brand-card border border-brand-border rounded-xl p-3 font-mono text-xs text-brand-cyan focus:outline-none focus:border-brand-violet leading-relaxed" placeholder="Click tags on the left or type your custom style description..."></textarea>
-
-            <!-- Exclude / Negative Tags field -->
-            <div>
-              <label class="block text-[11px] font-mono text-slate-400 mb-1">Negative Tags / Exclude from generation:</label>
-              <input type="text" id="negative-tags-input" placeholder="e.g. no saxophone, acoustic guitar, slow intro" class="w-full bg-brand-card border border-brand-border rounded-xl px-3 py-1.5 font-mono text-xs text-rose-300 focus:outline-none focus:border-rose-400 placeholder-slate-600">
-            </div>
-
-            <!-- Actions -->
-            <div class="flex items-center gap-2 pt-1">
-              <button onclick="copyAssembledPrompt()" class="flex-1 py-2 rounded-xl bg-brand-violet hover:bg-violet-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-brand-violet/20 transition">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
-                Copy for Suno
-              </button>
-              <button onclick="sendPromptToNewTrack()" class="py-2 px-3 rounded-xl bg-brand-card hover:bg-brand-border border border-brand-border text-brand-cyan font-bold text-xs flex items-center gap-1 transition">
-                <span>Save to Vault &rarr;</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Structured Metatags Lyric Arranger -->
-          <div class="bg-brand-panel border border-brand-border rounded-2xl p-5 shadow-lg space-y-3">
-            <div class="flex items-center justify-between">
-              <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-brand-emerald"></span>
-                Lyric Arranger &amp; Metatags
-              </h3>
-              <button onclick="copyStudioLyrics()" class="text-xs text-brand-cyan hover:underline">Copy Lyrics</button>
-            </div>
-            
-            <p class="text-[11px] text-slate-400">Click to inject Suno structural and vocal metatags into your lyrics:</p>
-
-            <!-- Metatag Toolbar -->
-            <div class="flex flex-wrap gap-1.5">
-              <button onclick="injectMetatag('[Intro]')" class="px-2 py-1 bg-brand-card hover:bg-brand-border text-cyan-300 border border-brand-border rounded text-[11px] font-mono">[Intro]</button>
-              <button onclick="injectMetatag('[Verse 1]')" class="px-2 py-1 bg-brand-card hover:bg-brand-border text-cyan-300 border border-brand-border rounded text-[11px] font-mono">[Verse]</button>
-              <button onclick="injectMetatag('[Pre-Chorus]')" class="px-2 py-1 bg-brand-card hover:bg-brand-border text-cyan-300 border border-brand-border rounded text-[11px] font-mono">[Pre-Chorus]</button>
-              <button onclick="injectMetatag('[Chorus]')" class="px-2 py-1 bg-brand-card hover:bg-brand-border text-brand-violet border border-brand-border rounded text-[11px] font-mono font-bold">[Chorus]</button>
-              <button onclick="injectMetatag('[Drop]')" class="px-2 py-1 bg-brand-card hover:bg-brand-border text-amber-300 border border-brand-border rounded text-[11px] font-mono font-bold">[Drop]</button>
-              <button onclick="injectMetatag('[Guitar Solo]')" class="px-2 py-1 bg-brand-card hover:bg-brand-border text-emerald-300 border border-brand-border rounded text-[11px] font-mono">[Guitar Solo]</button>
-              <button onclick="injectMetatag('[Bridge]')" class="px-2 py-1 bg-brand-card hover:bg-brand-border text-cyan-300 border border-brand-border rounded text-[11px] font-mono">[Bridge]</button>
-              <button onclick="injectMetatag('[Outro]')" class="px-2 py-1 bg-brand-card hover:bg-brand-border text-rose-300 border border-brand-border rounded text-[11px] font-mono">[Outro]</button>
-              <button onclick="injectMetatag('(whispered)')" class="px-2 py-1 bg-brand-card hover:bg-brand-border text-slate-400 border border-brand-border rounded text-[11px] italic">(whispered)</button>
-              <button onclick="injectMetatag('(belted high note)')" class="px-2 py-1 bg-brand-card hover:bg-brand-border text-slate-400 border border-brand-border rounded text-[11px] italic">(belted)</button>
-            </div>
-
-            <textarea id="studio-lyrics-input" rows="7" class="w-full bg-brand-card border border-brand-border rounded-xl p-3 font-mono text-xs text-slate-200 focus:outline-none focus:border-brand-emerald leading-relaxed" placeholder="[Intro]&#10;Synthesizer arpeggios rising...&#10;&#10;[Verse 1]&#10;Neon reflections through the midnight rain..."></textarea>
-          </div>
-
-        </div>
-
       </div>
 
     </section>
 
-    <!-- ================= VIEW 3: EXPORT & IMPORT / SYNC ================= -->
-    <section id="view-sync" class="hidden space-y-6 max-w-3xl mx-auto">
-      
-      <div class="bg-brand-panel border border-brand-border rounded-2xl p-6 shadow-lg space-y-6">
-        <div>
-          <h2 class="text-lg font-bold text-white flex items-center gap-2">
-            <svg class="w-5 h-5 text-brand-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-            Library Sync &amp; Backup
-          </h2>
-          <p class="text-xs text-slate-400 mt-1">Export your entire catalog of prompts, lyrics, and metadata into a lightweight JSON file to share with your friends or load their libraries into yours.</p>
+    <!-- RIGHT COLUMN: Lyric & Metatag Studio (7 cols) -->
+    <section class="lg:col-span-7 flex flex-col gap-4">
+
+      <!-- Lyric Editor Card -->
+      <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-5 shadow-xl flex flex-col gap-4 flex-1">
+        
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-microphone-lines text-suno-400 text-sm"></i>
+              <h2 class="text-sm font-semibold tracking-wide uppercase text-slate-200">Lyrics & Structural Metatags</h2>
+            </div>
+            <p class="text-[11px] text-slate-400">Click a tag below to insert it at your cursor in the lyrics</p>
+          </div>
+
+          <!-- Quick Structure Template Helpers -->
+          <div class="flex items-center gap-1.5">
+            <button onclick="insertTemplateSkeleton('pop')" class="text-[11px] px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition-colors" title="Insert complete standard verse/chorus skeleton">
+              Pop Layout
+            </button>
+            <button onclick="insertTemplateSkeleton('edm')" class="text-[11px] px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition-colors" title="Insert build & drop layout">
+              EDM/Drop Layout
+            </button>
+          </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <!-- Export -->
-          <div class="bg-brand-card border border-brand-border rounded-xl p-4 flex flex-col justify-between space-y-4">
-            <div>
-              <div class="w-10 h-10 rounded-lg bg-brand-violet/20 text-brand-violet flex items-center justify-center mb-3">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-              </div>
-              <h3 class="text-sm font-bold text-white">Export Vault JSON</h3>
-              <p class="text-[11px] text-slate-400 mt-1">Generates a timestamped JSON file containing all tracks, collaborators, prompts, and lyrics.</p>
+        <!-- Metatag Inserter Toolbars -->
+        <div class="flex flex-col gap-2.5 bg-slate-950/60 p-3 rounded-xl border border-slate-800/70">
+          
+          <!-- Structural Metatags -->
+          <div class="flex items-start sm:items-center gap-2">
+            <span class="text-[10px] font-mono font-semibold uppercase text-violet-400 tracking-wider w-16 shrink-0">Structure:</span>
+            <div class="flex flex-wrap gap-1">
+              <button onclick="insertMetatag('[Intro]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-violet-600/30 text-slate-300 hover:text-violet-200 border border-slate-700/60 hover:border-violet-500/40 transition-colors">[Intro]</button>
+              <button onclick="insertMetatag('[Verse 1]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-violet-600/30 text-slate-300 hover:text-violet-200 border border-slate-700/60 hover:border-violet-500/40 transition-colors">[Verse 1]</button>
+              <button onclick="insertMetatag('[Pre-Chorus]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-violet-600/30 text-slate-300 hover:text-violet-200 border border-slate-700/60 hover:border-violet-500/40 transition-colors">[Pre-Chorus]</button>
+              <button onclick="insertMetatag('[Chorus]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-violet-600/30 text-slate-300 hover:text-violet-200 border border-slate-700/60 hover:border-violet-500/40 transition-colors">[Chorus]</button>
+              <button onclick="insertMetatag('[Verse 2]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-violet-600/30 text-slate-300 hover:text-violet-200 border border-slate-700/60 hover:border-violet-500/40 transition-colors">[Verse 2]</button>
+              <button onclick="insertMetatag('[Bridge]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-violet-600/30 text-slate-300 hover:text-violet-200 border border-slate-700/60 hover:border-violet-500/40 transition-colors">[Bridge]</button>
+              <button onclick="insertMetatag('[Outro]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-violet-600/30 text-slate-300 hover:text-violet-200 border border-slate-700/60 hover:border-violet-500/40 transition-colors">[Outro]</button>
+              <button onclick="insertMetatag('[End]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-rose-600/30 text-slate-300 hover:text-rose-200 border border-slate-700/60 hover:border-rose-500/40 transition-colors">[End]</button>
             </div>
-            <button onclick="exportLibraryJSON()" class="w-full py-2 bg-brand-violet hover:bg-violet-600 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-2">
-              Download .json
+          </div>
+
+          <!-- Vocal & Performance Tags -->
+          <div class="flex items-start sm:items-center gap-2">
+            <span class="text-[10px] font-mono font-semibold uppercase text-cyan-400 tracking-wider w-16 shrink-0">Vocal:</span>
+            <div class="flex flex-wrap gap-1">
+              <button onclick="insertMetatag('[Female Vocal]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-cyan-600/30 text-slate-300 hover:text-cyan-200 border border-slate-700/60 hover:border-cyan-500/40 transition-colors">[Female Vocal]</button>
+              <button onclick="insertMetatag('[Male Vocal]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-cyan-600/30 text-slate-300 hover:text-cyan-200 border border-slate-700/60 hover:border-cyan-500/40 transition-colors">[Male Vocal]</button>
+              <button onclick="insertMetatag('[Layered Harmonies]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-cyan-600/30 text-slate-300 hover:text-cyan-200 border border-slate-700/60 hover:border-cyan-500/40 transition-colors">[Harmonies]</button>
+              <button onclick="insertMetatag('[Whisper]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-cyan-600/30 text-slate-300 hover:text-cyan-200 border border-slate-700/60 hover:border-cyan-500/40 transition-colors">[Whisper]</button>
+              <button onclick="insertMetatag('[Belting]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-cyan-600/30 text-slate-300 hover:text-cyan-200 border border-slate-700/60 hover:border-cyan-500/40 transition-colors">[Belting]</button>
+              <button onclick="insertMetatag('[Falsetto]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-cyan-600/30 text-slate-300 hover:text-cyan-200 border border-slate-700/60 hover:border-cyan-500/40 transition-colors">[Falsetto]</button>
+              <button onclick="insertMetatag('[Ad-lib: yeah, yeah]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-cyan-600/30 text-slate-300 hover:text-cyan-200 border border-slate-700/60 hover:border-cyan-500/40 transition-colors">[Ad-lib]</button>
+            </div>
+          </div>
+
+          <!-- Instrumental & Dynamic Cues -->
+          <div class="flex items-start sm:items-center gap-2">
+            <span class="text-[10px] font-mono font-semibold uppercase text-amber-400 tracking-wider w-16 shrink-0">Breaks:</span>
+            <div class="flex flex-wrap gap-1">
+              <button onclick="insertMetatag('[Instrumental Break]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-amber-600/30 text-slate-300 hover:text-amber-200 border border-slate-700/60 hover:border-amber-500/40 transition-colors">[Instrumental]</button>
+              <button onclick="insertMetatag('[Guitar Solo]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-amber-600/30 text-slate-300 hover:text-amber-200 border border-slate-700/60 hover:border-amber-500/40 transition-colors">[Guitar Solo]</button>
+              <button onclick="insertMetatag('[Drop - heavy bass]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-amber-600/30 text-slate-300 hover:text-amber-200 border border-slate-700/60 hover:border-amber-500/40 transition-colors">[Drop]</button>
+              <button onclick="insertMetatag('[Drum Breakdown]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-amber-600/30 text-slate-300 hover:text-amber-200 border border-slate-700/60 hover:border-amber-500/40 transition-colors">[Drum Break]</button>
+              <button onclick="insertMetatag('[Fade Out]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-amber-600/30 text-slate-300 hover:text-amber-200 border border-slate-700/60 hover:border-amber-500/40 transition-colors">[Fade Out]</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Lyric Textarea with stats header -->
+        <div class="relative flex-1 flex flex-col">
+          <div class="flex items-center justify-between py-1 px-1 text-xs text-slate-500">
+            <span id="lyric-stats">0 lines | 0 words</span>
+            <span class="text-[11px]">Suno Custom Mode: Lyric Box</span>
+          </div>
+
+          <textarea id="lyric-input" rows="15"
+                    oninput="updateLyricStats()"
+                    placeholder="Write your lyrics here or use the metatag buttons above to structure your song sections..."
+                    class="w-full flex-1 bg-slate-950 border border-slate-800 text-slate-100 rounded-xl p-4 text-xs sm:text-sm font-mono leading-relaxed focus:outline-none focus:border-violet-500 transition-all resize-y"></textarea>
+        </div>
+
+        <!-- Lyric Action Toolbar -->
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+          <div class="flex items-center gap-2">
+            <button onclick="clearLyrics()" class="text-xs text-slate-400 hover:text-rose-400 px-3 py-1.5 rounded-lg hover:bg-slate-800 transition-colors">
+              <i class="fa-regular fa-trash-can mr-1"></i> Clear Lyrics
+            </button>
+            <button onclick="downloadLyricsFile()" class="text-xs text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-800 transition-colors">
+              <i class="fa-solid fa-download mr-1"></i> Export .txt
             </button>
           </div>
 
-          <!-- Import -->
-          <div class="bg-brand-card border border-brand-border rounded-xl p-4 flex flex-col justify-between space-y-4">
-            <div>
-              <div class="w-10 h-10 rounded-lg bg-brand-cyan/20 text-brand-cyan flex items-center justify-center mb-3">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-              </div>
-              <h3 class="text-sm font-bold text-white">Import / Merge JSON</h3>
-              <p class="text-[11px] text-slate-400 mt-1">Select a friend's SunoVault JSON file to append new tracks to your local library.</p>
-            </div>
-            <div>
-              <input type="file" id="import-json-file" accept=".json" class="hidden" onchange="handleJSONImport(event)">
-              <button onclick="document.getElementById('import-json-file').click()" class="w-full py-2 bg-brand-card hover:bg-brand-border border border-brand-border text-brand-cyan rounded-lg text-xs font-bold transition flex items-center justify-center gap-2">
-                Select JSON File
-              </button>
-            </div>
-          </div>
-        </div>
+          <div class="flex items-center gap-2">
+            <button onclick="copyCombinedPackage()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all" title="Copies both style prompt and lyrics into a clean shareable block">
+              <i class="fa-solid fa-share-nodes"></i>
+              Copy Full Recipe
+            </button>
 
-        <!-- Sample Reset -->
-        <div class="pt-4 border-t border-brand-border/60 flex items-center justify-between">
-          <div>
-            <h4 class="text-xs font-bold text-slate-300">Reset Demo Catalog</h4>
-            <p class="text-[11px] text-slate-500">Restore the factory demo tracks (Synthwave, 90s Grunge, Liquid DnB, City Pop).</p>
+            <button onclick="copyLyrics()" class="bg-violet-600 hover:bg-violet-500 text-white font-semibold px-4 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md shadow-violet-950/50">
+              <i class="fa-regular fa-copy"></i>
+              Copy Lyrics
+            </button>
           </div>
-          <button onclick="restoreDefaultDemoTracks()" class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-lg text-xs font-medium transition">
-            Restore Defaults
-          </button>
         </div>
 
       </div>
@@ -373,1443 +344,322 @@
 
   </main>
 
-  <!-- ================= PERSISTENT BOTTOM AUDIO PLAYER DECK ================= -->
-  <aside id="audio-deck" class="fixed bottom-0 left-0 right-0 z-50 bg-brand-panel/95 backdrop-blur-xl border-t border-brand-border px-4 lg:px-8 py-3 shadow-2xl">
-    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
-      
-      <!-- Track Meta Info (Left) -->
-      <div class="flex items-center space-x-3 w-full md:w-1/4 min-w-0">
-        <!-- Generative Vinyl Artwork Box -->
-        <div id="deck-artwork" class="w-12 h-12 rounded-xl bg-gradient-to-tr from-brand-violet to-brand-cyan flex-shrink-0 flex items-center justify-center shadow-md relative overflow-hidden">
-          <svg class="w-6 h-6 text-white/90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <circle cx="12" cy="12" r="3"></circle>
-          </svg>
-          <div id="deck-spinning-indicator" class="absolute inset-0 border-2 border-white/20 rounded-full animate-spin hidden"></div>
-        </div>
-        <div class="truncate">
-          <h4 id="deck-track-title" class="text-sm font-bold text-white truncate">Select a Track to Play</h4>
-          <p id="deck-track-collab" class="text-xs text-slate-400 truncate">SunoVault Deck Ready</p>
-          <div class="flex items-center gap-1.5 mt-0.5">
-            <span id="deck-track-bpm" class="text-[10px] font-mono px-1.5 py-0.2 bg-brand-card text-brand-cyan border border-brand-border rounded">-- BPM</span>
-            <span id="deck-track-key" class="text-[10px] font-mono px-1.5 py-0.2 bg-brand-card text-brand-violet border border-brand-border rounded">Key --</span>
-            <span id="deck-audio-type" class="text-[9px] font-mono text-emerald-400">Synth Engine</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Player Controls & Timeline (Center) -->
-      <div class="flex flex-col items-center w-full md:w-2/4 space-y-1.5">
-        <div class="flex items-center gap-4">
-          <!-- Prev Track -->
-          <button onclick="playPrevTrack()" class="text-slate-400 hover:text-white transition p-1" title="Previous Track">
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
-          </button>
-
-          <!-- Play / Pause -->
-          <button onclick="togglePlayPause()" id="deck-play-btn" class="w-10 h-10 rounded-full bg-white hover:bg-slate-200 text-slate-950 flex items-center justify-center shadow-lg shadow-white/10 transition transform active:scale-95" title="Play/Pause">
-            <svg id="deck-play-icon" class="w-5 h-5 translate-x-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-            <svg id="deck-pause-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-          </button>
-
-          <!-- Next Track -->
-          <button onclick="playNextTrack()" class="text-slate-400 hover:text-white transition p-1" title="Next Track">
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
-          </button>
-
-          <!-- Loop Toggle -->
-          <button onclick="toggleLoop()" id="deck-loop-btn" class="text-slate-400 hover:text-brand-cyan transition p-1" title="Toggle Loop">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-          </button>
-        </div>
-
-        <!-- Scrub Timeline -->
-        <div class="w-full flex items-center gap-3 text-[11px] font-mono text-slate-400">
-          <span id="deck-current-time">0:00</span>
-          <div class="relative flex-1 flex items-center group">
-            <input type="range" id="deck-scrubber" min="0" max="100" value="0" step="0.1" oninput="handleSeek(this.value)" class="w-full h-1.5 bg-brand-border rounded-lg appearance-none cursor-pointer">
-          </div>
-          <span id="deck-total-time">0:00</span>
-        </div>
-      </div>
-
-      <!-- Visualizer & Volume (Right) -->
-      <div class="flex items-center justify-end gap-3 w-full md:w-1/4">
-        <!-- Live Web Audio Canvas Visualizer -->
-        <div class="relative w-28 h-9 bg-brand-card rounded-lg border border-brand-border overflow-hidden flex items-center justify-center">
-          <canvas id="visualizer-canvas" width="112" height="36" class="w-full h-full block"></canvas>
-        </div>
-
-        <!-- Volume Icon & Slider -->
-        <div class="flex items-center gap-1.5 text-slate-400">
-          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
-          </svg>
-          <input type="range" id="deck-volume" min="0" max="1" step="0.05" value="0.8" oninput="handleVolumeChange(this.value)" class="w-16 h-1.5 bg-brand-border rounded-lg appearance-none cursor-pointer">
-        </div>
-      </div>
-
+  <!-- Footnote & Instructions -->
+  <footer class="border-t border-slate-900 bg-slate-950/80 py-4 px-4 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+      <p>Pro tip: Avoid placing artist names in style prompts. Instead, describe the sound signatures (e.g. <code class="text-violet-400">gated reverb, Juno-106, 80s analog synth</code>).</p>
+      <p class="font-mono text-[11px] text-slate-600">Built for Suno v3 & v3.5/v4 workflows</p>
     </div>
-  </aside>
+  </footer>
 
-  <!-- Hidden native audio element for external streams/files -->
-  <audio id="native-audio" preload="metadata"></audio>
-
-  <!-- ================= ADD / EDIT TRACK MODAL ================= -->
-  <div id="track-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-brand-panel border border-brand-border rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl my-8">
-      
-      <!-- Modal Header -->
-      <div class="px-6 py-4 bg-brand-card border-b border-brand-border flex items-center justify-between">
-        <h3 id="modal-title" class="text-base font-bold text-white flex items-center gap-2">
-          <svg class="w-5 h-5 text-brand-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-          Add Suno AI Track to Vault
-        </h3>
-        <button onclick="closeModal()" class="text-slate-400 hover:text-white transition text-lg">&times;</button>
-      </div>
-
-      <!-- Modal Body -->
-      <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto text-xs">
-        <input type="hidden" id="edit-track-id">
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="block font-semibold text-slate-300 mb-1">Track Title *</label>
-            <input type="text" id="form-title" class="w-full bg-brand-card border border-brand-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-brand-violet" placeholder="e.g. Neon Horizon (Drop VIP)">
-          </div>
-          <div>
-            <label class="block font-semibold text-slate-300 mb-1">Friend / Collaborator Name</label>
-            <input type="text" id="form-collab" class="w-full bg-brand-card border border-brand-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-brand-violet" placeholder="e.g. Alex &amp; Dave">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="block font-semibold text-slate-300 mb-1">BPM (Beats Per Minute)</label>
-            <input type="number" id="form-bpm" class="w-full bg-brand-card border border-brand-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-brand-violet" placeholder="e.g. 128" value="128">
-          </div>
-          <div>
-            <label class="block font-semibold text-slate-300 mb-1">Musical Key</label>
-            <input type="text" id="form-key" class="w-full bg-brand-card border border-brand-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-brand-violet" placeholder="e.g. F Minor, A Major" value="A Minor">
-          </div>
-        </div>
-
-        <!-- Audio Source: Choice between File Upload, Audio URL, or Procedural Synth Fallback -->
-        <div class="bg-brand-card/70 border border-brand-border rounded-xl p-3.5 space-y-2">
-          <label class="block font-bold text-brand-cyan">Audio Source Option:</label>
-          <div class="flex flex-wrap gap-2 text-[11px] mb-2">
-            <button type="button" onclick="setAudioSourceMode('synth')" id="source-mode-synth" class="px-2.5 py-1 rounded bg-brand-violet text-white font-semibold">Web Audio Synth Engine</button>
-            <button type="button" onclick="setAudioSourceMode('url')" id="source-mode-url" class="px-2.5 py-1 rounded bg-brand-panel text-slate-400">Audio URL (Suno/CDN)</button>
-            <button type="button" onclick="setAudioSourceMode('upload')" id="source-mode-upload" class="px-2.5 py-1 rounded bg-brand-panel text-slate-400">Upload MP3/WAV File</button>
-          </div>
-
-          <div id="source-input-url" class="hidden">
-            <input type="url" id="form-audio-url" class="w-full bg-brand-panel border border-brand-border rounded-lg px-3 py-1.5 text-xs text-white" placeholder="https://cdn.suno.com/... or custom MP3 URL">
-          </div>
-
-          <div id="source-input-upload" class="hidden">
-            <input type="file" id="form-audio-file" accept="audio/*" class="w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-panel file:text-brand-cyan hover:file:bg-brand-border cursor-pointer">
-            <p class="text-[10px] text-slate-500 mt-1">Audio is read locally via browser Blob URL for instant playback.</p>
-          </div>
-
-          <div id="source-input-synth" class="text-[11px] text-slate-400">
-            Uses SunoVault's built-in generative procedural synth engine tuned to the BPM &amp; genre. Zero external files required!
-          </div>
-        </div>
-
-        <!-- Style Prompt -->
-        <div>
-          <label class="block font-semibold text-slate-300 mb-1">Suno Style Prompt (Tags &amp; Aesthetics) *</label>
-          <textarea id="form-prompt" rows="3" class="w-full bg-brand-card border border-brand-border rounded-xl px-3 py-2 font-mono text-xs text-brand-cyan focus:outline-none focus:border-brand-violet" placeholder="e.g. 128 BPM, Synthwave, driving 808 sub, nostalgic analog synths, gated reverb drums, melodic hook"></textarea>
-        </div>
-
-        <!-- Lyrics -->
-        <div>
-          <label class="block font-semibold text-slate-300 mb-1">Structured Lyrics with Metatags</label>
-          <textarea id="form-lyrics" rows="6" class="w-full bg-brand-card border border-brand-border rounded-xl px-3 py-2 font-mono text-xs text-slate-200 focus:outline-none focus:border-brand-violet" placeholder="[Intro]&#10;Echoing synth lead...&#10;&#10;[Verse]&#10;Racing down the coast at midnight...&#10;&#10;[Chorus]&#10;We are the digital dreamers..."></textarea>
-        </div>
-
-      </div>
-
-      <!-- Modal Footer -->
-      <div class="px-6 py-3.5 bg-brand-card border-t border-brand-border flex items-center justify-end gap-2">
-        <button onclick="closeModal()" class="px-4 py-2 bg-brand-panel hover:bg-brand-border text-slate-300 rounded-xl text-xs font-semibold transition">Cancel</button>
-        <button onclick="saveTrackFromModal()" class="px-5 py-2 bg-gradient-to-r from-brand-violet to-brand-cyan hover:opacity-90 text-slate-950 font-bold rounded-xl text-xs transition shadow-md shadow-brand-violet/20">Save Track</button>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ================= CUSTOM CONFIRMATION MODAL ================= -->
-  <div id="confirm-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-brand-panel border border-brand-border rounded-2xl w-full max-w-sm p-5 shadow-2xl text-center space-y-4">
-      <div class="w-12 h-12 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-      </div>
-      <div>
-        <h3 id="confirm-title" class="text-base font-bold text-white">Delete Track?</h3>
-        <p id="confirm-desc" class="text-xs text-slate-400 mt-1">This will permanently remove this track from your local vault.</p>
-      </div>
-      <div class="flex gap-2">
-        <button onclick="closeConfirmModal()" class="flex-1 py-2 bg-brand-card hover:bg-brand-border text-slate-300 rounded-xl text-xs font-semibold transition">Cancel</button>
-        <button id="confirm-action-btn" class="flex-1 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition">Delete</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ================= FLOATING TOAST NOTIFICATION CONTAINER ================= -->
-  <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
-
-  <!-- ================= APPLICATION LOGIC & AUDIO ENGINE ================= -->
+  <!-- Application Logic -->
   <script>
-    /* =========================================================
-       1. DATA STRUCTURES & DEFAULT CATALOG
-       ========================================================= */
-    const STORAGE_KEY = 'sunovault_tracks_v1';
-
-    const DEFAULT_TRACKS = [
-      {
-        id: 'track_synthwave_01',
-        title: 'Neon Overdrive (Drop VIP)',
-        collab: 'Dave & Marc',
-        bpm: 128,
-        key: 'A Minor',
-        audioType: 'synth', // 'synth' | 'url' | 'blob'
-        audioUrl: '',
-        duration: 168,
-        prompt: '128 BPM, Synthwave, Darksynth, driving 808 sub, nostalgic analog detuned synth leads, gated reverb drums, late-night high-speed drive, euphoric peak',
-        lyrics: `[Intro]
-(synthesizer arpeggio filtering up from deep resonance)
-[Instrumental Hook]
-
-[Verse 1]
-Chrome reflections under fractured neon light
-Engine screaming in the dead of city night
-Counting streetlights like a metronome in red
-All the phantom voices fading in my head
-
-[Pre-Chorus]
-(rising snare fill)
-Hold the line, don't look behind
-Voltage in the bloodline tonight
-
-[Chorus]
-Overdrive, take the sky, let the circuits ignite
-We are running on adrenaline and neon light!
-[Drop]
-(heavy sawtooth bass drop and pounding four-on-the-floor)
-
-[Outro]
-Analog decay into the dark...
-(fade out)`
-      },
-      {
-        id: 'track_grunge_02',
-        title: 'Velvet Decay',
-        collab: 'Sam (Guitars) & Liam',
-        bpm: 92,
-        key: 'D Minor',
-        audioType: 'synth',
-        audioUrl: '',
-        duration: 210,
-        prompt: '92 BPM, 90s Alt-Rock, Grunge, gritty raspy male vocals, distorted chorus guitar riff, raw unpolished room-mic drums, heavy fuzz bass, melancholic angst',
-        lyrics: `[Intro]
-[Guitar Riff]
-(slow fuzzy feedback and loose cymbal taps)
-
-[Verse 1]
-Rented room, paint peeling from the frame
-Writing down the syllables of what we couldn't name
-Spill the coffee on the hardwood floor
-Waiting for the hinges on the front screen door
-
-[Chorus]
-(belted raspy vocals)
-And it all turns into velvet decay!
-Take the bitter memory and throw it away!
-Nothing ever stays the way you wanted it to stay...
-
-[Guitar Solo]
-(heavy wah pedal and bends)
-
-[Outro]
-Decay... velvet decay...
-(feedback squeal)`
-      },
-      {
-        id: 'track_dnb_03',
-        title: 'Subsurface Current',
-        collab: 'Solo Session',
-        bpm: 174,
-        key: 'F Minor',
-        audioType: 'synth',
-        audioUrl: '',
-        duration: 184,
-        prompt: '174 BPM, Liquid Drum and Bass, ethereal breathy female vocals, rolling amen break, deep warm reese bassline, lush Rhodes piano chords, bittersweet summer vibe',
-        lyrics: `[Intro]
-(ambient underwater pads with gentle electric piano)
-[Vocal Chop]
-"Take me down... deep into the blue..."
-
-[Verse]
-Floating above the wreckage of yesterday
-Watching the tides carry the doubt away
-Speed of the current pulling through my hands
-Drifting far beyond the golden sands
-
-[Pre-Chorus]
-Can you hear the drums in the deep?
-(fast ticking hi-hats building up)
-
-[Drop]
-[Liquid DnB Roll]
-(deep resonant reese bass roll and crisp rolling snares)
-
-[Chorus]
-In the subsurface current, we learn to breathe
-Leaving all the weight behind that we don't need!
-
-[Outro]
-Rhodes piano fading gently into the tide...`
-      },
-      {
-        id: 'track_citypop_04',
-        title: 'Midnight in Shibuya',
-        collab: 'Kenji & Maya',
-        bpm: 116,
-        key: 'C# Minor',
-        audioType: 'synth',
-        audioUrl: '',
-        duration: 195,
-        prompt: '116 BPM, 1980s Japanese City Pop, bright slap bass, sparkling FM synthesizers, funky brass horn stabs, breezy carefree female vocals, late-night boulevard cruising',
-        lyrics: `[Intro]
-[Brass Stabs]
-[Slap Bass Groove]
-1, 2, 3, go!
-
-[Verse 1]
-Stepping out onto the crossing avenue
-Cassette player spinning something brand new
-City lights are singing in a pastel glow
-Nowhere else on Earth I'd rather go
-
-[Chorus]
-Midnight in Shibuya, dancing in the street!
-Every glowing billboard keeping up the beat!
-(horns flourishing high)`
-      }
-    ];
-
-    /* Prompt Studio Tag Matrix */
-    const STUDIO_TAGS = {
+    // Tag definitions
+    const TAG_DATA = {
       genre: [
-        "Synthwave", "Melodic Drum & Bass", "90s Alt-Rock", "Dark R&B", "Cyberpunk Industrial", 
-        "Japanese City Pop", "Liquid Funk", "Nu-Metal", "Lo-Fi Boom Bap", "Cinematic Orchestral", 
-        "UK Garage", "Deep Tech House", "Hyperpop", "Pop-Punk", "Post-Rock", "Shoegaze"
-      ],
-      vocal: [
-        "Gritty raspy male vocals", "Ethereal breathy female vocals", "Layered choir harmonies", 
-        "Autotuned hyperpop vox", "Melodic rap cadence", "Soulful belted hook", 
-        "Whispered ASMR intimacy", "Robotic vocoder", "Raw unproduced vocals", "Passionate vibrato"
-      ],
-      instrument: [
-        "Distorted 808 sub bass", "Analog Moog bassline", "Shimmering chorus guitars", 
-        "Pounding 909 kick", "Supersaw lead synth", "Raw room-mic drums", "Crisp rolling amen breaks", 
-        "Heavy sidechain pump", "Vintage vinyl crackle", "Bright funky brass stabs", "Acoustic cello & strings"
-      ],
-      mood: [
-        "Late-night cruising", "Melancholic nostalgia", "Euphoric peak drop", "Menacing dark tension", 
-        "Bittersweet summer", "Anthemic triumph", "Hypnotic chill", "Aggressive defiance", "Dreamlike floating"
+        'synthwave', 'indie folk', 'dark electro', 'boom bap', 'city pop', 
+        'math rock', 'neo-soul', 'liquid dnb', 'post-punk', 'midwest emo',
+        'melodic techno', 'cinematic orchestral', 'afrobeats', 'dreampop'
       ],
       tempo: [
-        "85 BPM Half-time", "92 BPM Mid-tempo", "116 BPM Funk groove", "128 BPM Club driving", 
-        "140 BPM Dubstep/Trap", "174 BPM Fast Drum & Bass"
+        '80 BPM', '95 BPM', '115 BPM', '128 BPM', '140 BPM', '174 BPM', 
+        'half-time groove', 'driving 4-on-the-floor', 'syncopated swing', 'slow burn'
+      ],
+      instruments: [
+        'analog synth pad', 'clean electric guitar', 'fingerpicked acoustic', 
+        'distorted 808 bass', 'live acoustic drums', 'slap bass', ' Rhodes piano', 
+        'brass horns', 'tape saturated strings', 'glitch percussion'
+      ],
+      texture: [
+        'lo-fi cassette saturation', 'spacious hall reverb', 'crisp sidechain compression', 
+        'vinyl crackle', 'distorted fuzz', 'warm vintage tape', 'wide stereo image', 'dry close-mic'
+      ],
+      mood: [
+        'melancholic', 'euphoric', 'aggressive grit', 'intimate & emotional', 
+        'nostalgic', 'soaring female vocals', 'raspy male vocal', 'chill atmospheric'
       ]
     };
 
-    /* App State */
-    let tracks = [];
-    let currentTrackIndex = -1;
-    let isPlaying = false;
-    let isLooping = false;
-    let activeTab = 'vault';
-    let selectedPromptTags = new Set();
-    let currentModalAudioMode = 'synth';
-    let uploadedFileBlob = null;
+    // State
+    let selectedChips = new Set();
 
-    /* =========================================================
-       2. WEB AUDIO API SYNTHESIZER & VISUALIZER ENGINE
-       ========================================================= */
-    let audioCtx = null;
-    let analyser = null;
-    let synthLoopTimer = null;
-    let synthGain = null;
-    let visualizerAnimFrame = null;
-    let simulatedPlaybackSeconds = 0;
-    let simulatedTicker = null;
-
-    function initAudioContext() {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 64; // 32 frequency bins for crisp visualizer bars
-        synthGain = audioCtx.createGain();
-        synthGain.gain.setValueAtTime(0.8, audioCtx.currentTime);
-        synthGain.connect(analyser);
-        analyser.connect(audioCtx.destination);
+    // Presets
+    const PRESETS = {
+      synthwave: {
+        chips: ['synthwave', '128 BPM', 'analog synth pad', 'crisp sidechain compression', 'driving 4-on-the-floor', 'nostalgic'],
+        lyrics: `[Intro - analog arpeggiator, gated reverb snare, 128 BPM]\n\n[Verse 1 - dry intimate male vocals, filtered drums]\nNeon reflections on a wet boulevard\nSpeeding away from the memories that scarred\nDashboard is glowing in magenta and blue\nEvery road marker brings me closer to you\n\n[Pre-Chorus - rising synth sweep, rolling snare build]\nEngine is humming, RPMs rise\nMidnight horizon caught in your eyes\n\n[Chorus - high energy, full sidechain synths, soaring layered harmonies]\nWe're driving past the edge of the night\nChasing the glow of the electric light\nNo looking back now, the city's behind\nTwo fading shadows impossible to find!\n\n[Drop - heavy 80s bassline, driving synth lead]\n\n[Verse 2 - punchy groove enters, clean guitar chords]\nHeadlights are cutting straight into the mist\nWhispering secrets we couldn't resist\n\n[Chorus - maximum energy, belted vocals]\nWe're driving past the edge of the night\nChasing the glow of the electric light\nNo looking back now, the city's behind\nTwo fading shadows impossible to find!\n\n[Outro - repeating synth riff, vocals fading]\nEdge of the night...\nFading out...\n\n[End - final synth chord reverberates]`
+      },
+      indiefolk: {
+        chips: ['indie folk', '80 BPM', 'fingerpicked acoustic', 'warm vintage tape', 'intimate & emotional', 'raspy male vocal'],
+        lyrics: `[Intro - gentle fingerpicked acoustic guitar, tape hiss, slow 80 BPM]\n\n[Verse 1 - close mic intimate male vocal, subtle upright bass]\nCoffee is cold on the kitchen sill\nMorning light quiet across the hill\nOld wooden floorboards remember your tread\nEchoes of promises quietly said\n\n[Chorus - acoustic guitar swells, warm vocal harmonies]\nTake me back to the river bend\nWhere the summer days never had to end\nCarved our names in the willow tree\nBack when the future was you and me\n\n[Verse 2 - soft brush snare enters, cello pad]\nLetters unread in the bottom drawer\nI don't look back at the lock on the door\n\n[Bridge - stripped down, solo acoustic, whisper tone]\nTime is a river that washes the clay\nCarrying all of our yesterdays away\n\n[Chorus - full band warm swell, rich harmonies]\nTake me back to the river bend\nWhere the summer days never had to end\nCarved our names in the willow tree\nBack when the future was you and me\n\n[Outro - whistling melody, acoustic guitar fades]\n\n[End - single acoustic strum rings out]`
+      },
+      cyberpunk: {
+        chips: ['dark electro', '140 BPM', 'distorted 808 bass', 'glitch percussion', 'aggressive grit', 'crisp sidechain compression'],
+        lyrics: `[Intro - metallic percussion, sub bass drone, ominous riser]\n\n[Verse 1 - whispered robotic cadence, industrial noise]\nChrome in the marrow, circuit in the eye\nAcid rain falling from a blackened sky\nMegacity towers pierce into the cloud\nScreaming in the static of a dying crowd\n\n[Pre-Chorus - industrial kick build, frantic stutter]\nCode execution: ready to ignite\nCut the mainline, kill the power grid tonight\n\n[Drop - aggressive distorted synth lead, 140 BPM, crushing 808]\n\n[Chorus - aggressive processed vocals, heavy layered distortion]\nOverclock the system till the wires break!\nHow much more can this synthetic heart take?\nSignal lost! Static high!\nBurn it to the ground, watch the neon die!\n\n[Bridge - silence for 1 bar, heavy low pass filter]\nRebooting...\n\n[Chorus - maximum energy, frantic glitch fills]\nOverclock the system till the wires break!\nHow much more can this synthetic heart take?\nSignal lost! Static high!\nBurn it to the ground, watch the neon die!\n\n[Outro - glitch decay, alarm klaxon fading]\n\n[End - abrupt power cut]`
+      },
+      boombap: {
+        chips: ['boom bap', '95 BPM', ' Rhodes piano', 'vinyl crackle', 'lo-fi cassette saturation', 'syncopated swing'],
+        lyrics: `[Intro - vinyl crackle, dusty jazz piano chords, head-nod drum count]\nOne, two... check it\n\n[Verse 1 - smooth conversational flow, punchy kick and snare]\nSidewalk philosophy, steam from the grate\nWriting my verses while the train running late\nInk on my knuckles, coffee in the cup\nWatching the borough as the sun waking up\nWordplay sharp like a newly cut groove\nKeep the pocket steady make the whole room move\n\n[Chorus - scratched vocal sample, warm upright bassline]\nBack in the rhythm of the city block\nTick tock never stop, rocking around the clock\nSmooth like butter on a summer night\nGolden era cadence when the groove is right\n\n[Verse 2 - upright bass walks, horn stab on the two and four]\nChasing the cadence that my heroes laid down\nFrom the underground tunnels to the top of the town\n\n[Outro - piano solo vamp, vocal ad-libs fade]\nYeah, keep it in the pocket\nJust let that tape roll...\n\n[End - needle lift from vinyl]`
+      },
+      citypop: {
+        chips: ['city pop', '115 BPM', 'slap bass', 'brass horns', 'wide stereo image', 'soaring female vocals'],
+        lyrics: `[Intro - sparkly FM synth bell, punchy slap bass riff, brass hits, 115 BPM]\n\n[Verse 1 - bright Japanese female vocal, breezy syncopation]\nSunset across Tokyo Bay\nWatching the pastel lights fade away\nSlip on my heels, turn the radio dial\nThinking 'bout you with a bittersweet smile\n\n[Pre-Chorus - rising brass fanfare, funky rhythm guitar scratch]\nDon't let the evening slip through our hands\nDance to the melody nobody understands\n\n[Chorus - full brass section, soaring lead vocals, lush backing harmonies]\nMidnight highway, driving into dawn!\nEven when the glittering lights are gone\nStay with me under the sparkling sky\nPlastic love whispers as the cars speed by!\n\n[Saxophone Solo - breezy, melodic, smooth vintage tone]\n\n[Outro - slap bass groove, repeating vocal refrain with harmonies]\nStay with me...\nMidnight highway...\n\n[Fade Out - brass riff repeats to silence]`
+      },
+      progmetal: {
+        chips: ['math rock', '140 BPM', 'clean electric guitar', 'distorted fuzz', 'aggressive grit', 'half-time groove'],
+        lyrics: `[Intro - complex polyrhythmic 7/8 guitar riff, double bass drum build]\n\n[Verse 1 - dry clean vocals, syncopated palm-muted guitar]\nFractured coordinates, shifting the grid\nBurying memories of everything we did\nCalculating fractures in the quantum spine\nTicking off seconds on a borrowed timeline\n\n[Pre-Chorus - rising tension, heavy floor tom groove]\nWatch the fracture split in two\nThere's no anchor left for you\n\n[Chorus - heavy drop-tuned riff, soaring belted vocal]\nCollapse the monolith into the deep!\nPromises you made that you could never keep!\nFractal patterns crashing down\nIn the silence where we drown!\n\n[Instrumental Breakdown - crushing polymetric djent groove]\n\n[Outro - clean guitar taps, ambient delay fade]\n\n[End - sudden cut on snare rimshot]`
       }
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
+    };
+
+    // Render chips into UI
+    function renderChipGroups() {
+      renderGroup('group-genre', TAG_DATA.genre);
+      renderGroup('group-tempo', TAG_DATA.tempo);
+      renderGroup('group-instruments', TAG_DATA.instruments);
+      renderGroup('group-texture', TAG_DATA.texture);
+      renderGroup('group-mood', TAG_DATA.mood);
     }
 
-    /* Generative Synth Engine: Plays musical rhythmic loops matching track BPM/Key */
-    function startProceduralSynth(track) {
-      initAudioContext();
-      stopProceduralSynth();
-
-      const bpm = track.bpm || 128;
-      const beatInterval = 60 / bpm; // Seconds per quarter note
-      const now = audioCtx.currentTime;
-
-      // Bass root frequency based on Key approximation
-      let rootFreq = 110; // A2
-      if (track.key && track.key.includes('D')) rootFreq = 73.42; // D2
-      if (track.key && track.key.includes('F')) rootFreq = 87.31; // F2
-      if (track.key && track.key.includes('C')) rootFreq = 65.41; // C2
-
-      let step = 0;
-
-      function scheduleBeat() {
-        if (!isPlaying) return;
-        const t = audioCtx.currentTime;
-
-        // Kick drum on quarters
-        if (step % 2 === 0) {
-          triggerKick(t);
-        }
-
-        // Snare on offbeats 2 & 4
-        if (step % 4 === 2) {
-          triggerSnare(t);
-        }
-
-        // Hi-Hat on 8ths
-        triggerHiHat(t);
-
-        // Synth Bass Pattern
-        const bassFreq = (step % 4 === 3) ? rootFreq * 1.33 : (step % 4 === 2) ? rootFreq * 1.5 : rootFreq;
-        triggerBass(t, bassFreq, beatInterval * 0.45);
-
-        // Ambient chord pad swell every 8 steps
-        if (step % 8 === 0) {
-          triggerPad(t, rootFreq * 2, beatInterval * 4);
-        }
-
-        step = (step + 1) % 16;
-        synthLoopTimer = setTimeout(scheduleBeat, (beatInterval / 2) * 1000);
-      }
-
-      scheduleBeat();
-    }
-
-    function stopProceduralSynth() {
-      if (synthLoopTimer) {
-        clearTimeout(synthLoopTimer);
-        synthLoopTimer = null;
-      }
-    }
-
-    /* Kick synthesis */
-    function triggerKick(t) {
-      if (!audioCtx) return;
-      const osc = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-      osc.frequency.setValueAtTime(140, t);
-      osc.frequency.exponentialRampToValueAtTime(38, t + 0.15);
-      g.gain.setValueAtTime(0.9, t);
-      g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
-      osc.connect(g);
-      g.connect(synthGain);
-      osc.start(t);
-      osc.stop(t + 0.22);
-    }
-
-    /* Snare synthesis */
-    function triggerSnare(t) {
-      if (!audioCtx) return;
-      // White noise buffer
-      const bSize = audioCtx.sampleRate * 0.12;
-      const b = audioCtx.createBuffer(1, bSize, audioCtx.sampleRate);
-      const data = b.getChannelData(0);
-      for (let i = 0; i < bSize; i++) data[i] = Math.random() * 2 - 1;
-      const noise = audioCtx.createBufferSource();
-      noise.buffer = b;
-
-      const f = audioCtx.createBiquadFilter();
-      f.type = 'highpass';
-      f.frequency.setValueAtTime(900, t);
-
-      const g = audioCtx.createGain();
-      g.gain.setValueAtTime(0.4, t);
-      g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
-
-      noise.connect(f);
-      f.connect(g);
-      g.connect(synthGain);
-      noise.start(t);
-      noise.stop(t + 0.12);
-    }
-
-    /* Hi-hat synthesis */
-    function triggerHiHat(t) {
-      if (!audioCtx) return;
-      const bSize = audioCtx.sampleRate * 0.04;
-      const b = audioCtx.createBuffer(1, bSize, audioCtx.sampleRate);
-      const data = b.getChannelData(0);
-      for (let i = 0; i < bSize; i++) data[i] = Math.random() * 2 - 1;
-      const noise = audioCtx.createBufferSource();
-      noise.buffer = b;
-      const f = audioCtx.createBiquadFilter();
-      f.type = 'highpass';
-      f.frequency.setValueAtTime(7000, t);
-      const g = audioCtx.createGain();
-      g.gain.setValueAtTime(0.18, t);
-      g.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
-      noise.connect(f);
-      f.connect(g);
-      g.connect(synthGain);
-      noise.start(t);
-      noise.stop(t + 0.04);
-    }
-
-    /* Bassline synth */
-    function triggerBass(t, freq, len) {
-      if (!audioCtx) return;
-      const osc = audioCtx.createOscillator();
-      const filter = audioCtx.createBiquadFilter();
-      const g = audioCtx.createGain();
-
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(freq, t);
-
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(650, t);
-      filter.frequency.exponentialRampToValueAtTime(140, t + len);
-
-      g.gain.setValueAtTime(0.55, t);
-      g.gain.exponentialRampToValueAtTime(0.001, t + len);
-
-      osc.connect(filter);
-      filter.connect(g);
-      g.connect(synthGain);
-      osc.start(t);
-      osc.stop(t + len);
-    }
-
-    /* Pad synthesis */
-    function triggerPad(t, freq, len) {
-      if (!audioCtx) return;
-      const osc1 = audioCtx.createOscillator();
-      const osc2 = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-
-      osc1.type = 'sine';
-      osc2.type = 'triangle';
-      osc1.frequency.setValueAtTime(freq, t);
-      osc2.frequency.setValueAtTime(freq * 1.5, t); // Perfect fifth harmonic
-
-      g.gain.setValueAtTime(0.001, t);
-      g.gain.linearRampToValueAtTime(0.25, t + len * 0.3);
-      g.gain.exponentialRampToValueAtTime(0.001, t + len);
-
-      osc1.connect(g);
-      osc2.connect(g);
-      g.connect(synthGain);
-      osc1.start(t);
-      osc2.start(t);
-      osc1.stop(t + len);
-      osc2.stop(t + len);
-    }
-
-    /* Dynamic Canvas Frequency Visualizer */
-    function startVisualizer() {
-      const canvas = document.getElementById('visualizer-canvas');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      const bufferLength = analyser ? analyser.frequencyBinCount : 32;
-      const dataArray = new Uint8Array(bufferLength);
-
-      function draw() {
-        visualizerAnimFrame = requestAnimationFrame(draw);
-
-        if (analyser && isPlaying) {
-          analyser.getByteFrequencyData(dataArray);
-        } else {
-          // Subtle idle oscillation when paused
-          for (let i = 0; i < bufferLength; i++) {
-            dataArray[i] = Math.max(3, Math.sin(Date.now() * 0.003 + i * 0.4) * 6 + 4);
-          }
-        }
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const barWidth = (canvas.width / bufferLength) * 1.25;
-        let x = 0;
-
-        for (let i = 0; i < bufferLength; i++) {
-          const barHeight = (dataArray[i] / 255) * (canvas.height - 4);
-
-          // Neon gradient from Violet to Cyan
-          const grad = ctx.createLinearGradient(0, canvas.height, 0, 0);
-          grad.addColorStop(0, '#8b5cf6');
-          grad.addColorStop(0.6, '#06b6d4');
-          grad.addColorStop(1, '#10b981');
-
-          ctx.fillStyle = grad;
-          ctx.fillRect(x, canvas.height - barHeight, barWidth - 1, barHeight);
-          x += barWidth;
-        }
-      }
-
-      draw();
-    }
-
-    /* =========================================================
-       3. STORAGE & LIBRARY INITIALIZATION
-       ========================================================= */
-    function loadTracks() {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          tracks = JSON.parse(stored);
-        } else {
-          tracks = JSON.parse(JSON.stringify(DEFAULT_TRACKS));
-          saveTracks();
-        }
-      } catch (e) {
-        tracks = JSON.parse(JSON.stringify(DEFAULT_TRACKS));
-      }
-    }
-
-    function saveTracks() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(tracks));
-      } catch (e) {
-        showToast('Storage full or error saving to localStorage', 'rose');
-      }
-      populateFilters();
-      renderVaultGrid();
-      updateLibraryStats();
-    }
-
-    function restoreDefaultDemoTracks() {
-      tracks = JSON.parse(JSON.stringify(DEFAULT_TRACKS));
-      saveTracks();
-      showToast('Restored default demo tracks!', 'cyan');
-    }
-
-    /* =========================================================
-       4. NAVIGATION & TABS
-       ========================================================= */
-    function switchTab(tab) {
-      activeTab = tab;
-      document.getElementById('view-vault').classList.toggle('hidden', tab !== 'vault');
-      document.getElementById('view-studio').classList.toggle('hidden', tab !== 'studio');
-      document.getElementById('view-sync').classList.toggle('hidden', tab !== 'sync');
-
-      // Update button classes
-      const tabs = ['vault', 'studio', 'sync'];
-      tabs.forEach(t => {
-        const btn = document.getElementById(`tab-btn-${t}`);
-        if (t === tab) {
-          btn.className = "px-4 py-2 rounded-lg transition-all flex items-center gap-2 bg-brand-violet text-white shadow-sm font-semibold";
-        } else {
-          btn.className = "px-4 py-2 rounded-lg transition-all flex items-center gap-2 text-slate-400 hover:text-white";
-        }
+    function renderGroup(containerId, tags) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+      tags.forEach(tag => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `text-[11px] px-2.5 py-1 rounded-lg border border-slate-800 bg-slate-900/80 text-slate-300 hover:border-slate-700 hover:text-white transition-all select-none ${selectedChips.has(tag) ? 'chip-active' : ''}`;
+        btn.textContent = tag;
+        btn.onclick = () => toggleChip(tag);
+        container.appendChild(btn);
       });
-
-      if (tab === 'studio') {
-        updatePromptPreview();
-      }
     }
 
-    /* =========================================================
-       5. VAULT RENDERING, SEARCH & FILTERS
-       ========================================================= */
-    function updateLibraryStats() {
-      document.getElementById('stat-track-count').innerText = tracks.length;
-      
-      const collabs = new Set(tracks.map(t => t.collab || 'Solo').filter(Boolean));
-      document.getElementById('stat-collab-count').innerText = collabs.size;
-
-      const totalBpm = tracks.reduce((acc, t) => acc + (parseInt(t.bpm) || 120), 0);
-      const avg = tracks.length ? Math.round(totalBpm / tracks.length) : 0;
-      document.getElementById('stat-avg-bpm').innerText = avg;
-    }
-
-    function populateFilters() {
-      const collabSelect = document.getElementById('filter-collaborator');
-      const genreSelect = document.getElementById('filter-genre');
-
-      const collabs = new Set();
-      tracks.forEach(t => { if (t.collab) collabs.add(t.collab); });
-      collabSelect.innerHTML = '<option value="all">All Collaborators</option>' +
-        Array.from(collabs).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
-
-      // Extract high frequency genre keywords
-      const genres = ["Synthwave", "Grunge", "Drum & Bass", "City Pop", "R&B", "Rock", "House", "Lo-Fi"];
-      genreSelect.innerHTML = '<option value="all">All Genres</option>' +
-        genres.map(g => `<option value="${g}">${g}</option>`).join('');
-    }
-
-    function filterTracks() {
-      const query = document.getElementById('vault-search-input').value.toLowerCase().trim();
-      const collabFilter = document.getElementById('filter-collaborator').value;
-      const genreFilter = document.getElementById('filter-genre').value;
-
-      const filtered = tracks.filter(t => {
-        const matchesQuery = !query || 
-          t.title.toLowerCase().includes(query) ||
-          (t.collab && t.collab.toLowerCase().includes(query)) ||
-          t.prompt.toLowerCase().includes(query) ||
-          (t.lyrics && t.lyrics.toLowerCase().includes(query));
-
-        const matchesCollab = collabFilter === 'all' || t.collab === collabFilter;
-        const matchesGenre = genreFilter === 'all' || t.prompt.toLowerCase().includes(genreFilter.toLowerCase());
-
-        return matchesQuery && matchesCollab && matchesGenre;
-      });
-
-      renderVaultGrid(filtered);
-    }
-
-    function resetFilters() {
-      document.getElementById('vault-search-input').value = '';
-      document.getElementById('filter-collaborator').value = 'all';
-      document.getElementById('filter-genre').value = 'all';
-      renderVaultGrid(tracks);
-    }
-
-    function renderVaultGrid(list = tracks) {
-      const grid = document.getElementById('tracks-grid');
-      const empty = document.getElementById('vault-empty-state');
-
-      if (!list || list.length === 0) {
-        grid.innerHTML = '';
-        empty.classList.remove('hidden');
-        return;
-      }
-      empty.classList.add('hidden');
-
-      grid.innerHTML = list.map((t, index) => {
-        const isCurrentActive = currentTrackIndex >= 0 && tracks[currentTrackIndex]?.id === t.id;
-        const formattedLyrics = highlightLyricMetatags(t.lyrics || "No lyrics provided.");
-
-        // Extract 3-4 prompt pills
-        const promptPills = (t.prompt || "").split(',')
-          .map(p => p.trim())
-          .filter(Boolean)
-          .slice(0, 4);
-
-        return `
-          <div class="bg-brand-panel border ${isCurrentActive ? 'border-brand-cyan shadow-lg shadow-brand-cyan/10' : 'border-brand-border'} rounded-2xl p-5 transition-all duration-200 hover:border-slate-600 flex flex-col justify-between group">
-            
-            <!-- Top Card Header -->
-            <div>
-              <div class="flex items-start justify-between gap-3 mb-2.5">
-                <div class="flex items-center space-x-3 min-w-0">
-                  <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-brand-violet/30 via-brand-card to-brand-cyan/30 border border-brand-border flex items-center justify-center flex-shrink-0 group-hover:border-brand-cyan transition">
-                    <svg class="w-5 h-5 ${isCurrentActive && isPlaying ? 'text-brand-cyan animate-pulse' : 'text-slate-400'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
-                    </svg>
-                  </div>
-                  <div class="truncate">
-                    <h3 class="text-sm font-bold text-white truncate group-hover:text-brand-cyan transition cursor-pointer" onclick="playTrackById('${t.id}')">${escapeHtml(t.title)}</h3>
-                    <p class="text-xs text-slate-400 truncate">with <span class="text-slate-200">${escapeHtml(t.collab || 'Solo')}</span></p>
-                  </div>
-                </div>
-
-                <!-- Play/Pause Pill Button -->
-                <button onclick="playTrackById('${t.id}')" class="px-3 py-1.5 rounded-xl ${isCurrentActive && isPlaying ? 'bg-brand-cyan text-slate-950 font-bold' : 'bg-brand-card hover:bg-brand-violet hover:text-white text-slate-300'} border border-brand-border text-xs flex items-center gap-1.5 transition active:scale-95 shadow-sm">
-                  ${isCurrentActive && isPlaying ? `
-                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                    <span>Pause</span>
-                  ` : `
-                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                    <span>Play</span>
-                  `}
-                </button>
-              </div>
-
-              <!-- BPM, Key & Badge Row -->
-              <div class="flex flex-wrap items-center gap-2 mb-3">
-                <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-brand-card text-brand-cyan border border-brand-border">⚡ ${t.bpm || 120} BPM</span>
-                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-card text-brand-violet border border-brand-border">🎹 ${t.key || 'C Major'}</span>
-                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-card text-emerald-400 border border-brand-border">⏱ ${formatTime(t.duration || 180)}</span>
-                <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 uppercase">${t.audioType || 'synth'}</span>
-              </div>
-
-              <!-- Style Prompt Tags Pills -->
-              <div class="mb-3">
-                <span class="text-[10px] uppercase font-mono text-slate-500 font-semibold block mb-1">Style Prompt</span>
-                <div class="flex flex-wrap gap-1">
-                  ${promptPills.map(p => `<span class="text-[11px] px-2 py-0.5 bg-brand-card/80 border border-brand-border text-slate-300 rounded-md font-mono">${escapeHtml(p)}</span>`).join('')}
-                  ${(t.prompt || "").split(',').length > 4 ? `<span class="text-[11px] px-1.5 py-0.5 text-slate-500">+${(t.prompt || "").split(',').length - 4} more</span>` : ''}
-                </div>
-              </div>
-
-              <!-- Expandable Lyrics Drawer -->
-              <div class="mt-2 pt-2 border-t border-brand-border/60">
-                <button onclick="toggleLyricsDrawer('${t.id}')" class="text-xs text-slate-400 hover:text-white flex items-center justify-between w-full py-1">
-                  <span class="flex items-center gap-1.5 font-semibold">
-                    <svg class="w-3.5 h-3.5 text-brand-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
-                    Structured Lyrics &amp; Metatags
-                  </span>
-                  <span id="chevron-${t.id}" class="text-xs transition-transform">&darr;</span>
-                </button>
-                <div id="drawer-${t.id}" class="hidden mt-2 p-3 bg-brand-card/90 border border-brand-border rounded-xl font-mono text-xs text-slate-300 max-h-56 overflow-y-auto whitespace-pre-wrap leading-relaxed">
-                  ${formattedLyrics}
-                </div>
-              </div>
-            </div>
-
-            <!-- Bottom Card Action Toolbar -->
-            <div class="flex items-center justify-between pt-3 mt-4 border-t border-brand-border text-xs text-slate-400">
-              <div class="flex items-center gap-1.5">
-                <button onclick="copyToClipboard(\`${escapeForAttr(t.prompt)}\`, 'Copied Style Prompt!')" class="p-1.5 bg-brand-card hover:bg-brand-border hover:text-white rounded-lg border border-brand-border transition" title="Copy Style Prompt">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                </button>
-                <button onclick="copyToClipboard(\`${escapeForAttr(t.lyrics)}\`, 'Copied Lyrics!')" class="p-1.5 bg-brand-card hover:bg-brand-border hover:text-white rounded-lg border border-brand-border transition" title="Copy Lyrics">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                </button>
-                <button onclick="sendToStudio('${t.id}')" class="px-2 py-1 bg-brand-violet/20 hover:bg-brand-violet/30 text-brand-violet border border-brand-violet/40 rounded-lg font-semibold text-[11px] transition flex items-center gap-1" title="Load tags into Prompt Studio">
-                  <span>Send to Studio</span>
-                </button>
-              </div>
-
-              <div class="flex items-center gap-1">
-                <button onclick="openEditModal('${t.id}')" class="p-1.5 hover:text-brand-cyan transition" title="Edit Track">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                </button>
-                <button onclick="confirmDeleteTrack('${t.id}')" class="p-1.5 hover:text-rose-400 transition" title="Delete Track">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                </button>
-              </div>
-            </div>
-
-          </div>
-        `;
-      }).join('');
-    }
-
-    function toggleLyricsDrawer(trackId) {
-      const drawer = document.getElementById(`drawer-${trackId}`);
-      const chevron = document.getElementById(`chevron-${trackId}`);
-      if (!drawer) return;
-      const isHidden = drawer.classList.contains('hidden');
-      drawer.classList.toggle('hidden', !isHidden);
-      if (chevron) chevron.innerHTML = isHidden ? '&uarr;' : '&darr;';
-    }
-
-    function highlightLyricMetatags(text) {
-      if (!text) return '';
-      let escaped = escapeHtml(text);
-      // Highlight [Intro], [Chorus], [Drop], etc. in cyan
-      escaped = escaped.replace(/\[(.*?)\]/g, '<span class="text-brand-cyan font-bold bg-brand-panel/90 px-1 py-0.5 rounded border border-brand-cyan/30 inline-block my-0.5">[$1]</span>');
-      // Highlight (performance cues) in violet italic
-      escaped = escaped.replace(/\((.*?)\)/g, '<span class="text-brand-violet italic">($1)</span>');
-      return escaped;
-    }
-
-    /* =========================================================
-       6. AUDIO PLAYER PLAYBACK & SCRUBBING
-       ========================================================= */
-    function playTrackById(trackId) {
-      const index = tracks.findIndex(t => t.id === trackId);
-      if (index === -1) return;
-
-      if (currentTrackIndex === index && isPlaying) {
-        pausePlayback();
-        return;
-      }
-
-      currentTrackIndex = index;
-      loadAndPlayCurrentTrack();
-    }
-
-    function loadAndPlayCurrentTrack() {
-      const track = tracks[currentTrackIndex];
-      if (!track) return;
-
-      initAudioContext();
-      const nativeAudio = document.getElementById('native-audio');
-
-      // Update UI elements in Deck
-      document.getElementById('deck-track-title').innerText = track.title;
-      document.getElementById('deck-track-collab').innerText = track.collab ? `by ${track.collab}` : 'Solo Track';
-      document.getElementById('deck-track-bpm').innerText = `${track.bpm || 120} BPM`;
-      document.getElementById('deck-track-key').innerText = track.key || 'C Major';
-      document.getElementById('deck-audio-type').innerText = track.audioType === 'url' ? 'Direct Stream' : track.audioType === 'blob' ? 'Local File' : 'Synth Engine';
-
-      const totalSec = track.duration || 180;
-      document.getElementById('deck-total-time').innerText = formatTime(totalSec);
-      document.getElementById('deck-scrubber').max = totalSec;
-
-      simulatedPlaybackSeconds = 0;
-
-      // Handle audio stream vs synth
-      if (track.audioType === 'url' && track.audioUrl) {
-        stopProceduralSynth();
-        nativeAudio.src = track.audioUrl;
-        nativeAudio.play().catch(() => {
-          showToast('External audio error, falling back to Synth Engine', 'amber');
-          startProceduralSynth(track);
-        });
-      } else if (track.audioType === 'blob' && track.audioBlobUrl) {
-        stopProceduralSynth();
-        nativeAudio.src = track.audioBlobUrl;
-        nativeAudio.play().catch(e => console.warn(e));
+    function toggleChip(tag) {
+      if (selectedChips.has(tag)) {
+        selectedChips.delete(tag);
       } else {
-        // Fallback to generative procedural synth!
-        nativeAudio.pause();
-        startProceduralSynth(track);
+        selectedChips.add(tag);
       }
-
-      isPlaying = true;
-      updatePlayPauseButtonUI(true);
-      startTimelineTicker(totalSec);
-      renderVaultGrid();
+      syncUIFromChips();
     }
 
-    function togglePlayPause() {
-      if (currentTrackIndex === -1 && tracks.length > 0) {
-        currentTrackIndex = 0;
-        loadAndPlayCurrentTrack();
-        return;
-      }
-      if (isPlaying) {
-        pausePlayback();
-      } else {
-        resumePlayback();
-      }
+    function addCustomTag(tagText) {
+      const clean = tagText.trim().replace(/^,+|,+$/g, '');
+      if (!clean) return;
+      selectedChips.add(clean.toLowerCase());
+      syncUIFromChips();
     }
 
-    function pausePlayback() {
-      isPlaying = false;
-      const nativeAudio = document.getElementById('native-audio');
-      nativeAudio.pause();
-      stopProceduralSynth();
-      clearInterval(simulatedTicker);
-      updatePlayPauseButtonUI(false);
-      renderVaultGrid();
-    }
-
-    function resumePlayback() {
-      if (currentTrackIndex === -1 && tracks.length > 0) {
-        currentTrackIndex = 0;
-      }
-      const track = tracks[currentTrackIndex];
-      if (!track) return;
-
-      isPlaying = true;
-      const nativeAudio = document.getElementById('native-audio');
-
-      if ((track.audioType === 'url' || track.audioType === 'blob') && nativeAudio.src) {
-        nativeAudio.play().catch(() => startProceduralSynth(track));
-      } else {
-        startProceduralSynth(track);
-      }
-
-      updatePlayPauseButtonUI(true);
-      startTimelineTicker(track.duration || 180);
-      renderVaultGrid();
-    }
-
-    function updatePlayPauseButtonUI(playing) {
-      document.getElementById('deck-play-icon').classList.toggle('hidden', playing);
-      document.getElementById('deck-pause-icon').classList.toggle('hidden', !playing);
-      document.getElementById('deck-spinning-indicator').classList.toggle('hidden', !playing);
-    }
-
-    function startTimelineTicker(maxDuration) {
-      clearInterval(simulatedTicker);
-      simulatedTicker = setInterval(() => {
-        if (!isPlaying) return;
-        const nativeAudio = document.getElementById('native-audio');
-
-        if (!nativeAudio.paused && nativeAudio.duration) {
-          simulatedPlaybackSeconds = nativeAudio.currentTime;
-        } else {
-          simulatedPlaybackSeconds += 0.5;
-        }
-
-        if (simulatedPlaybackSeconds >= maxDuration) {
-          if (isLooping) {
-            simulatedPlaybackSeconds = 0;
-            if (!nativeAudio.paused) nativeAudio.currentTime = 0;
-          } else {
-            playNextTrack();
-            return;
-          }
-        }
-
-        document.getElementById('deck-current-time').innerText = formatTime(simulatedPlaybackSeconds);
-        document.getElementById('deck-scrubber').value = simulatedPlaybackSeconds;
-      }, 500);
-    }
-
-    function handleSeek(val) {
-      simulatedPlaybackSeconds = parseFloat(val);
-      document.getElementById('deck-current-time').innerText = formatTime(simulatedPlaybackSeconds);
-      const nativeAudio = document.getElementById('native-audio');
-      if (!nativeAudio.paused) {
-        nativeAudio.currentTime = simulatedPlaybackSeconds;
-      }
-    }
-
-    function handleVolumeChange(val) {
-      const vol = parseFloat(val);
-      if (synthGain) synthGain.gain.setValueAtTime(vol, audioCtx.currentTime);
-      const nativeAudio = document.getElementById('native-audio');
-      if (nativeAudio) nativeAudio.volume = vol;
-    }
-
-    function toggleLoop() {
-      isLooping = !isLooping;
-      const btn = document.getElementById('deck-loop-btn');
-      btn.className = isLooping ? 'text-brand-cyan transition p-1 font-bold' : 'text-slate-400 hover:text-brand-cyan transition p-1';
-      showToast(isLooping ? 'Looping enabled' : 'Looping disabled', 'cyan');
-    }
-
-    function playNextTrack() {
-      if (tracks.length === 0) return;
-      currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
-      loadAndPlayCurrentTrack();
-    }
-
-    function playPrevTrack() {
-      if (tracks.length === 0) return;
-      currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length;
-      loadAndPlayCurrentTrack();
-    }
-
-    /* =========================================================
-       7. PROMPT STUDIO ENGINE
-       ========================================================= */
-    function renderPromptStudioTags() {
-      for (const [category, tagList] of Object.entries(STUDIO_TAGS)) {
-        const container = document.getElementById(`tag-group-${category}`);
-        if (!container) continue;
-
-        container.innerHTML = tagList.map(tag => {
-          const isSelected = selectedPromptTags.has(tag);
-          return `
-            <button onclick="togglePromptTag('${escapeForAttr(tag)}')" class="px-2.5 py-1 rounded-lg text-xs font-mono transition border ${
-              isSelected 
-                ? 'bg-brand-violet text-white border-brand-violet shadow-sm shadow-brand-violet/30 font-bold' 
-                : 'bg-brand-card hover:bg-brand-border text-slate-300 border-brand-border'
-            }">
-              ${escapeHtml(tag)}
-            </button>
-          `;
-        }).join('');
-      }
-    }
-
-    function togglePromptTag(tag) {
-      if (selectedPromptTags.has(tag)) {
-        selectedPromptTags.delete(tag);
-      } else {
-        selectedPromptTags.add(tag);
-      }
-      renderPromptStudioTags();
-      updatePromptPreview();
-    }
-
-    function addCustomTag() {
+    function addCustomTagFromInput() {
       const input = document.getElementById('custom-tag-input');
-      const val = input.value.trim();
-      if (!val) return;
-      selectedPromptTags.add(val);
-      input.value = '';
-      updatePromptPreview();
-      showToast(`Added custom tag: "${val}"`, 'cyan');
-    }
-
-    function clearAllPromptTags() {
-      selectedPromptTags.clear();
-      renderPromptStudioTags();
-      updatePromptPreview();
-    }
-
-    function updatePromptPreview() {
-      const textarea = document.getElementById('assembled-prompt-text');
-      const tagsArray = Array.from(selectedPromptTags);
-      const promptString = tagsArray.join(', ');
-      textarea.value = promptString;
-
-      const counter = document.getElementById('prompt-char-counter');
-      const len = promptString.length;
-      counter.innerText = `${len} / 120 chars`;
-      counter.className = len > 120 ? 'text-xs font-mono text-amber-400 font-bold' : 'text-xs font-mono text-slate-400';
-    }
-
-    function copyAssembledPrompt() {
-      const textarea = document.getElementById('assembled-prompt-text');
-      const negativeInput = document.getElementById('negative-tags-input');
-
-      let finalPrompt = textarea.value.trim();
-      if (negativeInput.value.trim()) {
-        finalPrompt += ` [Exclude: ${negativeInput.value.trim()}]`;
+      if (input.value.trim()) {
+        addCustomTag(input.value);
+        input.value = '';
       }
-
-      if (!finalPrompt) {
-        showToast('Prompt is empty! Click some chips first.', 'amber');
-        return;
-      }
-
-      copyToClipboard(finalPrompt, 'Copied Style Prompt to clipboard!');
     }
 
-    function copyStudioLyrics() {
-      const lyrics = document.getElementById('studio-lyrics-input').value;
-      if (!lyrics.trim()) {
-        showToast('Lyrics box is empty!', 'amber');
-        return;
+    document.getElementById('custom-tag-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addCustomTagFromInput();
       }
-      copyToClipboard(lyrics, 'Copied Lyrics with Metatags!');
+    });
+
+    function syncUIFromChips() {
+      renderChipGroups();
+      const compiled = Array.from(selectedChips).join(', ');
+      document.getElementById('compiled-prompt').value = compiled;
+      updateCharCounter(compiled);
     }
 
-    function injectMetatag(metatag) {
-      const textarea = document.getElementById('studio-lyrics-input');
+    function handlePromptDirectEdit(val) {
+      updateCharCounter(val);
+      // Re-sync chips that match exactly
+      const currentTags = val.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+      selectedChips = new Set(currentTags);
+      renderChipGroups();
+    }
+
+    function updateCharCounter(text) {
+      const count = text.length;
+      const countEl = document.getElementById('char-count');
+      const progressEl = document.getElementById('char-progress');
+      countEl.textContent = count;
+
+      // 120 chars target calculation
+      const percentage = Math.min(100, Math.round((count / 120) * 100));
+      progressEl.style.width = `${percentage}%`;
+
+      if (count <= 120) {
+        countEl.className = 'font-bold text-cyan-400';
+        progressEl.className = 'h-full bg-cyan-400 transition-all duration-200';
+      } else if (count <= 180) {
+        countEl.className = 'font-bold text-amber-400';
+        progressEl.className = 'h-full bg-amber-400 transition-all duration-200';
+      } else {
+        countEl.className = 'font-bold text-rose-400';
+        progressEl.className = 'h-full bg-rose-500 transition-all duration-200';
+      }
+    }
+
+    function clearStyleChips() {
+      selectedChips.clear();
+      syncUIFromChips();
+      showToast('Style prompt cleared');
+    }
+
+    // Insert metatag at cursor in lyric textarea
+    function insertMetatag(tag) {
+      const textarea = document.getElementById('lyric-input');
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
       const text = textarea.value;
 
-      const insertion = `\n${metatag}\n`;
-      textarea.value = text.substring(0, start) + insertion + text.substring(end);
-      textarea.selectionStart = textarea.selectionEnd = start + insertion.length;
+      // Ensure proper newline spacing if inserted mid-text
+      let insertion = tag;
+      const before = text.substring(0, start);
+      const after = text.substring(end);
+
+      const needsLeadingNewline = before.length > 0 && !before.endsWith('\n');
+      const needsTrailingNewline = after.length > 0 && !after.startsWith('\n');
+
+      if (needsLeadingNewline) insertion = '\n\n' + insertion;
+      if (needsTrailingNewline) insertion = insertion + '\n';
+      else insertion = insertion + '\n';
+
+      textarea.value = before + insertion + after;
+      const newCursor = start + insertion.length;
+      textarea.setSelectionRange(newCursor, newCursor);
       textarea.focus();
+      updateLyricStats();
+      showToast(`Inserted ${tag}`);
     }
 
-    function sendPromptToNewTrack() {
-      const promptText = document.getElementById('assembled-prompt-text').value;
-      const lyricsText = document.getElementById('studio-lyrics-input').value;
-
-      openAddModal();
-      document.getElementById('form-prompt').value = promptText;
-      if (lyricsText) document.getElementById('form-lyrics').value = lyricsText;
-    }
-
-    function sendToStudio(trackId) {
-      const track = tracks.find(t => t.id === trackId);
-      if (!track) return;
-
-      selectedPromptTags.clear();
-      const tags = (track.prompt || "").split(',').map(s => s.trim()).filter(Boolean);
-      tags.forEach(t => selectedPromptTags.add(t));
-
-      switchTab('studio');
-      renderPromptStudioTags();
-      updatePromptPreview();
-
-      if (track.lyrics) {
-        document.getElementById('studio-lyrics-input').value = track.lyrics;
+    function insertTemplateSkeleton(type) {
+      const textarea = document.getElementById('lyric-input');
+      let skeleton = '';
+      if (type === 'pop') {
+        skeleton = `[Intro - instrumentation only]\n\n[Verse 1]\nLine 1\nLine 2\nLine 3\nLine 4\n\n[Pre-Chorus - dynamic build]\nLine 5\nLine 6\n\n[Chorus - full band, layered vocals]\nMain hook line here\nSecondary hook line\nChorus climax line\nRefrain line\n\n[Verse 2]\nLine 7\nLine 8\n\n[Chorus - full band, layered vocals]\nMain hook line here\nSecondary hook line\nChorus climax line\nRefrain line\n\n[Bridge - stripped arrangement, emotional vocal]\nBridge line 1\nBridge line 2\n\n[Chorus - maximum energy]\nMain hook line here\nSecondary hook line\nChorus climax line\nRefrain line\n\n[Outro - repeating hook]\nFading line...\n\n[End]`;
+      } else if (type === 'edm') {
+        skeleton = `[Intro - atmospheric synth, slowly opening filter]\n\n[Verse 1 - sparse drums, vocal entry]\nFirst verse line\nSecond verse line\n\n[Build-up - rapid snare roll, rising white noise riser]\nHold on tight, here it comes\n\n[Drop - heavy sub bass, lead synth hook, aggressive drums]\n\n[Breakdown - piano melody, half-time groove]\nSlow down the pulse\n\n[Build-up - frantic snare roll, maximum riser pitch]\n\n[Drop - full power, high energy groove]\n\n[Outro - synth pad decays]\n\n[End - reverb tail fades]`;
       }
 
-      showToast(`Loaded "${track.title}" into Prompt Studio!`, 'violet');
-    }
-
-    /* =========================================================
-       8. MODALS & TRACK CREATION/EDITING
-       ========================================================= */
-    function openAddModal() {
-      document.getElementById('edit-track-id').value = '';
-      document.getElementById('modal-title').innerText = 'Add Suno AI Track to Vault';
-      document.getElementById('form-title').value = '';
-      document.getElementById('form-collab').value = '';
-      document.getElementById('form-bpm').value = '128';
-      document.getElementById('form-key').value = 'A Minor';
-      document.getElementById('form-audio-url').value = '';
-      document.getElementById('form-prompt').value = '';
-      document.getElementById('form-lyrics').value = '';
-      uploadedFileBlob = null;
-      setAudioSourceMode('synth');
-
-      document.getElementById('track-modal').classList.remove('hidden');
-    }
-
-    function openEditModal(trackId) {
-      const track = tracks.find(t => t.id === trackId);
-      if (!track) return;
-
-      document.getElementById('edit-track-id').value = track.id;
-      document.getElementById('modal-title').innerText = 'Edit Suno Track';
-      document.getElementById('form-title').value = track.title || '';
-      document.getElementById('form-collab').value = track.collab || '';
-      document.getElementById('form-bpm').value = track.bpm || 120;
-      document.getElementById('form-key').value = track.key || 'C Major';
-      document.getElementById('form-audio-url').value = track.audioUrl || '';
-      document.getElementById('form-prompt').value = track.prompt || '';
-      document.getElementById('form-lyrics').value = track.lyrics || '';
-
-      setAudioSourceMode(track.audioType || 'synth');
-      document.getElementById('track-modal').classList.remove('hidden');
-    }
-
-    function closeModal() {
-      document.getElementById('track-modal').classList.add('hidden');
-    }
-
-    function setAudioSourceMode(mode) {
-      currentModalAudioMode = mode;
-      document.getElementById('source-input-synth').classList.toggle('hidden', mode !== 'synth');
-      document.getElementById('source-input-url').classList.toggle('hidden', mode !== 'url');
-      document.getElementById('source-input-upload').classList.toggle('hidden', mode !== 'upload');
-
-      ['synth', 'url', 'upload'].forEach(m => {
-        const btn = document.getElementById(`source-mode-${m}`);
-        if (m === mode) {
-          btn.className = "px-2.5 py-1 rounded bg-brand-violet text-white font-semibold";
-        } else {
-          btn.className = "px-2.5 py-1 rounded bg-brand-panel text-slate-400";
-        }
-      });
-    }
-
-    // Handle local file upload
-    document.getElementById('form-audio-file').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        uploadedFileBlob = URL.createObjectURL(file);
-        showToast(`Loaded "${file.name}" for instant playback!`, 'cyan');
+      if (textarea.value.trim() !== '') {
+        textarea.value += '\n\n' + skeleton;
+      } else {
+        textarea.value = skeleton;
       }
-    });
+      updateLyricStats();
+      showToast('Inserted layout template');
+    }
 
-    function saveTrackFromModal() {
-      const title = document.getElementById('form-title').value.trim();
-      const prompt = document.getElementById('form-prompt').value.trim();
+    function updateLyricStats() {
+      const text = document.getElementById('lyric-input').value;
+      const lines = text ? text.split('\n').filter(l => l.trim().length > 0).length : 0;
+      const words = text ? (text.match(/\b\S+\b/g) || []).length : 0;
+      document.getElementById('lyric-stats').textContent = `${lines} lines | ${words} words`;
+    }
 
-      if (!title || !prompt) {
-        showToast('Please provide at least a Title and a Style Prompt!', 'rose');
+    function clearLyrics() {
+      document.getElementById('lyric-input').value = '';
+      updateLyricStats();
+      showToast('Lyrics cleared');
+    }
+
+    function loadPreset(key) {
+      if (!key || !PRESETS[key]) return;
+      const preset = PRESETS[key];
+      selectedChips = new Set(preset.chips);
+      syncUIFromChips();
+      document.getElementById('lyric-input').value = preset.lyrics;
+      updateLyricStats();
+      showToast(`Loaded ${key.toUpperCase()} recipe`);
+    }
+
+    function resetAll() {
+      selectedChips.clear();
+      syncUIFromChips();
+      document.getElementById('lyric-input').value = '';
+      document.getElementById('template-select').value = '';
+      updateLyricStats();
+      showToast('Workstation reset');
+    }
+
+    // Safe clipboard execution for iFrames
+    function executeCopy(text, successMsg) {
+      if (!text.trim()) {
+        showToast('Nothing to copy!');
         return;
       }
-
-      const editId = document.getElementById('edit-track-id').value;
-      const collab = document.getElementById('form-collab').value.trim() || 'Solo';
-      const bpm = parseInt(document.getElementById('form-bpm').value) || 120;
-      const key = document.getElementById('form-key').value.trim() || 'C Major';
-      const audioUrl = document.getElementById('form-audio-url').value.trim();
-      const lyrics = document.getElementById('form-lyrics').value.trim();
-
-      let audioType = currentModalAudioMode;
-      let blobUrl = uploadedFileBlob;
-
-      if (editId) {
-        // Update existing track
-        const index = tracks.findIndex(t => t.id === editId);
-        if (index !== -1) {
-          tracks[index] = {
-            ...tracks[index],
-            title,
-            collab,
-            bpm,
-            key,
-            audioType,
-            audioUrl: audioType === 'url' ? audioUrl : '',
-            audioBlobUrl: audioType === 'upload' ? (blobUrl || tracks[index].audioBlobUrl) : '',
-            prompt,
-            lyrics
-          };
-          showToast(`Updated "${title}"`, 'cyan');
-        }
-      } else {
-        // Add new track
-        const newTrack = {
-          id: 'track_' + Date.now(),
-          title,
-          collab,
-          bpm,
-          key,
-          audioType,
-          audioUrl: audioType === 'url' ? audioUrl : '',
-          audioBlobUrl: audioType === 'upload' ? blobUrl : '',
-          duration: 180,
-          prompt,
-          lyrics
-        };
-        tracks.unshift(newTrack);
-        showToast(`Saved "${title}" to your Vault!`, 'cyan');
-      }
-
-      saveTracks();
-      closeModal();
-      switchTab('vault');
-    }
-
-    /* Delete handling with custom modal */
-    let trackToDeleteId = null;
-    function confirmDeleteTrack(trackId) {
-      trackToDeleteId = trackId;
-      const track = tracks.find(t => t.id === trackId);
-      document.getElementById('confirm-title').innerText = `Delete "${track?.title || 'Track'}"?`;
-      document.getElementById('confirm-action-btn').onclick = executeDelete;
-      document.getElementById('confirm-modal').classList.remove('hidden');
-    }
-
-    function closeConfirmModal() {
-      document.getElementById('confirm-modal').classList.add('hidden');
-      trackToDeleteId = null;
-    }
-
-    function executeDelete() {
-      if (!trackToDeleteId) return;
-      tracks = tracks.filter(t => t.id !== trackToDeleteId);
-      saveTracks();
-      closeConfirmModal();
-      showToast('Track deleted from vault', 'rose');
-    }
-
-    /* =========================================================
-       9. EXPORT & IMPORT JSON
-       ========================================================= */
-    function exportLibraryJSON() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tracks, null, 2));
-      const downloadAnchor = document.createElement('a');
-      const timestamp = new Date().toISOString().slice(0, 10);
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `SunoVault_Backup_${timestamp}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-      showToast('Exported library as JSON!', 'cyan');
-    }
-
-    function handleJSONImport(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const imported = JSON.parse(e.target.result);
-          if (Array.isArray(imported)) {
-            // Merge tracks avoiding duplicate IDs
-            let addedCount = 0;
-            imported.forEach(newTrack => {
-              if (newTrack.title && newTrack.prompt) {
-                if (!tracks.some(t => t.id === newTrack.id)) {
-                  tracks.push(newTrack);
-                  addedCount++;
-                }
-              }
-            });
-            saveTracks();
-            showToast(`Merged ${addedCount} new tracks into Vault!`, 'cyan');
-            switchTab('vault');
-          } else {
-            showToast('Invalid JSON file format', 'rose');
-          }
-        } catch (err) {
-          showToast('Could not parse JSON file', 'rose');
-        }
-      };
-      reader.readAsText(file);
-      event.target.value = '';
-    }
-
-    /* =========================================================
-       10. UTILITIES, CLIPBOARD & TOAST
-       ========================================================= */
-    function copyToClipboard(text, successMessage = 'Copied to clipboard!') {
-      if (!text) return;
-      // Resilient fallback for iFrames and environments restricting navigator.clipboard
-      const textArea = document.createElement("textarea");
-      textArea.value = text;
-      textArea.style.top = "0";
-      textArea.style.left = "0";
-      textArea.style.position = "fixed";
-      textArea.style.opacity = "0";
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
+      const el = document.createElement('textarea');
+      el.value = text;
+      el.setAttribute('readonly', '');
+      el.style.position = 'absolute';
+      el.style.left = '-9999px';
+      document.body.appendChild(el);
+      el.select();
       try {
         document.execCommand('copy');
-        showToast(successMessage, 'cyan');
+        showToast(successMsg);
       } catch (err) {
-        showToast('Clipboard access denied', 'rose');
+        showToast('Clipboard access denied');
       }
-      document.body.removeChild(textArea);
+      document.body.removeChild(el);
     }
 
-    function showToast(message, type = 'violet') {
-      const container = document.getElementById('toast-container');
-      const toast = document.createElement('div');
-      
-      const borderColor = type === 'cyan' ? 'border-brand-cyan text-brand-cyan' : type === 'rose' ? 'border-rose-500 text-rose-400' : type === 'amber' ? 'border-amber-500 text-amber-300' : 'border-brand-violet text-brand-violet';
-
-      toast.className = `px-4 py-2.5 rounded-xl bg-brand-panel/95 backdrop-blur-md border ${borderColor} text-xs font-semibold shadow-xl flex items-center gap-2 transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto`;
-      toast.innerHTML = `
-        <span class="w-2 h-2 rounded-full ${type === 'cyan' ? 'bg-brand-cyan' : type === 'rose' ? 'bg-rose-500' : 'bg-brand-violet'}"></span>
-        <span class="text-white">${escapeHtml(message)}</span>
-      `;
-
-      container.appendChild(toast);
-      setTimeout(() => {
-        toast.classList.remove('translate-y-2', 'opacity-0');
-      }, 10);
-
-      setTimeout(() => {
-        toast.classList.add('opacity-0', '-translate-y-2');
-        setTimeout(() => toast.remove(), 300);
-      }, 2600);
+    function copyStylePrompt() {
+      const prompt = document.getElementById('compiled-prompt').value;
+      executeCopy(prompt, 'Style prompt copied to clipboard!');
     }
 
-    function formatTime(seconds) {
-      const s = Math.floor(seconds || 0);
-      const mins = Math.floor(s / 60);
-      const remSecs = s % 60;
-      return `${mins}:${remSecs < 10 ? '0' : ''}${remSecs}`;
+    function copyLyrics() {
+      const lyrics = document.getElementById('lyric-input').value;
+      executeCopy(lyrics, 'Lyrics copied to clipboard!');
     }
 
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+    function copyCombinedPackage() {
+      const style = document.getElementById('compiled-prompt').value;
+      const lyrics = document.getElementById('lyric-input').value;
+      const combined = `=== SUNO STYLE OF MUSIC ===\n${style}\n\n=== SUNO LYRICS & METATAGS ===\n${lyrics}`;
+      executeCopy(combined, 'Full recipe copied to clipboard!');
     }
 
-    function escapeForAttr(str) {
-      if (!str) return '';
-      return String(str)
-        .replace(/\\/g, '\\\\')
-        .replace(/`/g, '\\`')
-        .replace(/\$/g, '\\$');
-    }
-
-    /* =========================================================
-       11. INITIALIZATION
-       ========================================================= */
-    window.addEventListener('DOMContentLoaded', () => {
-      loadTracks();
-      renderPromptStudioTags();
-      startVisualizer();
-      
-      // Auto-load first track into Deck state
-      if (tracks.length > 0) {
-        currentTrackIndex = 0;
-        const first = tracks[0];
-        document.getElementById('deck-track-title').innerText = first.title;
-        document.getElementById('deck-track-collab').innerText = first.collab ? `by ${first.collab}` : 'Solo Track';
-        document.getElementById('deck-track-bpm').innerText = `${first.bpm || 120} BPM`;
-        document.getElementById('deck-track-key').innerText = first.key || 'C Major';
-        document.getElementById('deck-total-time').innerText = formatTime(first.duration || 180);
-        document.getElementById('deck-scrubber').max = first.duration || 180;
+    function downloadLyricsFile() {
+      const text = document.getElementById('lyric-input').value;
+      if (!text.trim()) {
+        showToast('Lyrics are empty!');
+        return;
       }
-    });
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'suno_lyrics.txt';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      showToast('Downloaded suno_lyrics.txt');
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const msg = document.getElementById('toast-message');
+      msg.textContent = message;
+      toast.classList.remove('opacity-0', '-translate-y-16');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      clearTimeout(window._toastTimeout);
+      window._toastTimeout = setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', '-translate-y-16');
+      }, 2500);
+    }
+
+    // Initialize application
+    window.onload = function () {
+      renderChipGroups();
+      loadPreset('synthwave');
+    };
   </script>
 </body>
 </html>
