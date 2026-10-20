@@ -12,7 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  
+
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -38,32 +38,26 @@
   </script>
 
   <style>
-    /* Custom scrollbars */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #0f172a;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #334155;
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #475569;
-    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
     .chip-active {
       background: rgba(139, 92, 246, 0.22) !important;
       border-color: #8b5cf6 !important;
       color: #ddd6fe !important;
       box-shadow: 0 0 10px rgba(139, 92, 246, 0.25);
     }
+    .chip-exclude-active {
+      background: rgba(244, 63, 94, 0.18) !important;
+      border-color: #f43f5e !important;
+      color: #fecdd3 !important;
+    }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col selection:bg-violet-600 selection:text-white">
 
-  <!-- Toast Notification Container -->
+  <!-- Toast -->
   <div id="toast" class="fixed top-5 right-5 z-50 transform -translate-y-16 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-3 bg-slate-900/95 border border-violet-500/50 text-white px-5 py-3 rounded-xl shadow-2xl shadow-violet-950/50 backdrop-blur-md">
     <div class="w-7 h-7 rounded-full bg-violet-600/30 text-violet-400 flex items-center justify-center text-sm">
       <i class="fa-solid fa-check"></i>
@@ -81,7 +75,7 @@
           </div>
         </div>
         <div>
-          <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+          <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2 flex-wrap">
             Suno Studio Companion
             <span class="text-xs px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20 font-mono font-medium">Prompt & Metatag Architect</span>
           </h1>
@@ -89,42 +83,58 @@
         </div>
       </div>
 
-      <!-- Quick Preset Selector & Reset -->
-      <div class="flex items-center gap-2">
-        <label for="template-select" class="text-xs text-slate-400 font-medium hidden sm:inline">Load Preset:</label>
-        <select id="template-select" onchange="loadPreset(this.value)" class="bg-slate-800/90 border border-slate-700/80 text-xs text-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-violet-500 transition-colors">
+      <div class="flex flex-wrap items-center gap-2">
+        <label for="template-select" class="text-xs text-slate-400 font-medium hidden sm:inline">Recipe:</label>
+        <select id="template-select" onchange="loadPreset(this.value)" class="bg-slate-800/90 border border-slate-700/80 text-xs text-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-violet-500 transition-colors max-w-[11rem]">
           <option value="">-- Choose Recipe --</option>
-          <option value="synthwave">80s Neon Synthwave</option>
-          <option value="indiefolk">Intimate Indie Folk</option>
-          <option value="cyberpunk">Cyberpunk Industrial</option>
-          <option value="boombap">90s Jazzy Boom Bap</option>
-          <option value="citypop">Tokyo City Pop</option>
-          <option value="progmetal">Modern Djent Metal</option>
         </select>
-        <button onclick="resetAll()" class="p-1.5 px-2.5 rounded-lg text-xs bg-slate-800/80 hover:bg-rose-950/40 text-slate-400 hover:text-rose-300 border border-slate-700/60 hover:border-rose-500/30 transition-all" title="Clear All">
+
+        <select id="my-recipes" onchange="loadMyRecipe(this.value)" class="bg-slate-800/90 border border-slate-700/80 text-xs text-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-violet-500 transition-colors max-w-[11rem]" title="Your saved recipes (stored in this browser)">
+          <option value="">-- My Recipes --</option>
+        </select>
+        <button onclick="saveMyRecipe()" class="p-1.5 px-2.5 rounded-lg text-xs bg-slate-800/80 hover:bg-violet-950/50 text-slate-300 hover:text-violet-200 border border-slate-700/60 hover:border-violet-500/30 transition-all" title="Save the current style + lyrics as a recipe">
+          <i class="fa-regular fa-floppy-disk mr-1"></i> Save
+        </button>
+        <button onclick="deleteMyRecipe()" class="p-1.5 px-2.5 rounded-lg text-xs bg-slate-800/80 hover:bg-rose-950/40 text-slate-400 hover:text-rose-300 border border-slate-700/60 hover:border-rose-500/30 transition-all" title="Delete the selected saved recipe">
+          <i class="fa-regular fa-trash-can"></i>
+        </button>
+        <button onclick="resetAll()" class="p-1.5 px-2.5 rounded-lg text-xs bg-slate-800/80 hover:bg-rose-950/40 text-slate-400 hover:text-rose-300 border border-slate-700/60 hover:border-rose-500/30 transition-all" title="Clear everything">
           <i class="fa-solid fa-arrow-rotate-left mr-1"></i> Reset
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Main Workstation Layout -->
+  <!-- How it works -->
+  <div class="max-w-7xl mx-auto w-full px-4 sm:px-6 pt-4">
+    <div class="text-xs text-slate-400 bg-slate-900/50 border border-slate-800/70 rounded-xl px-4 py-2.5 flex flex-wrap gap-x-5 gap-y-1">
+      <span><span class="text-violet-400 font-semibold">1.</span> Pick a recipe or click tags to build a style</span>
+      <span><span class="text-violet-400 font-semibold">2.</span> Write lyrics and add structure tags</span>
+      <span><span class="text-violet-400 font-semibold">3.</span> Copy into Suno's Custom Mode (Style, Exclude and Lyrics boxes)</span>
+      <span class="text-slate-500">Your work autosaves in this browser.</span>
+    </div>
+  </div>
+
+  <!-- Main -->
   <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-    <!-- LEFT COLUMN: Style Prompt Builder (5 cols) -->
+    <!-- LEFT: Style -->
     <section class="lg:col-span-5 flex flex-col gap-5">
 
-      <!-- Style Engine Card -->
       <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between gap-2">
           <div class="flex items-center gap-2">
             <i class="fa-solid fa-sliders text-violet-400 text-sm"></i>
             <h2 class="text-sm font-semibold tracking-wide uppercase text-slate-300">Style Generator</h2>
           </div>
-          <span class="text-xs text-slate-400">Click tags to toggle</span>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400 hidden sm:inline">Click tags to toggle</span>
+            <button onclick="randomizeStyle()" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-cyan-600/20 text-slate-300 hover:text-cyan-200 border border-slate-700/60 hover:border-cyan-500/40 transition-colors" title="Pick a random combination of tags">
+              <i class="fa-solid fa-dice mr-1"></i> Surprise me
+            </button>
+          </div>
         </div>
 
-        <!-- Custom tag addition input -->
         <div class="flex items-center gap-2">
           <div class="relative flex-1">
             <i class="fa-solid fa-tag absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
@@ -136,86 +146,85 @@
           </button>
         </div>
 
-        <!-- Tag Category Groups -->
         <div class="space-y-4 max-h-[380px] overflow-y-auto pr-1">
-
-          <!-- Genres -->
           <div>
             <div class="text-[11px] font-semibold uppercase text-slate-400 mb-1.5 flex items-center gap-1.5">
               <i class="fa-solid fa-record-vinyl text-[10px] text-cyan-400"></i> Primary Genre
             </div>
-            <div class="flex flex-wrap gap-1.5" id="group-genre">
-              <!-- Rendered via JS -->
-            </div>
+            <div class="flex flex-wrap gap-1.5" id="group-genre"></div>
           </div>
-
-          <!-- Tempo & Rhythm -->
           <div>
             <div class="text-[11px] font-semibold uppercase text-slate-400 mb-1.5 flex items-center gap-1.5">
               <i class="fa-solid fa-stopwatch text-[10px] text-amber-400"></i> Tempo & Meter
             </div>
             <div class="flex flex-wrap gap-1.5" id="group-tempo"></div>
           </div>
-
-          <!-- Key Instrumentation -->
           <div>
             <div class="text-[11px] font-semibold uppercase text-slate-400 mb-1.5 flex items-center gap-1.5">
               <i class="fa-solid fa-guitar text-[10px] text-emerald-400"></i> Instrumentation
             </div>
             <div class="flex flex-wrap gap-1.5" id="group-instruments"></div>
           </div>
-
-          <!-- Production & Texture Descriptors -->
           <div>
             <div class="text-[11px] font-semibold uppercase text-slate-400 mb-1.5 flex items-center gap-1.5">
               <i class="fa-solid fa-wand-magic-sparkles text-[10px] text-violet-400"></i> Texture & Production
             </div>
             <div class="flex flex-wrap gap-1.5" id="group-texture"></div>
           </div>
-
-          <!-- Mood & Vocal Tone -->
           <div>
             <div class="text-[11px] font-semibold uppercase text-slate-400 mb-1.5 flex items-center gap-1.5">
-              <i class="fa-solid fa-heart-pulse text-[10px] text-rose-400"></i> Mood & Vocal Tone
+              <i class="fa-solid fa-microphone text-[10px] text-sky-400"></i> Vocals
+            </div>
+            <div class="flex flex-wrap gap-1.5" id="group-vocals"></div>
+          </div>
+          <div>
+            <div class="text-[11px] font-semibold uppercase text-slate-400 mb-1.5 flex items-center gap-1.5">
+              <i class="fa-solid fa-heart-pulse text-[10px] text-rose-400"></i> Mood
             </div>
             <div class="flex flex-wrap gap-1.5" id="group-mood"></div>
           </div>
-
         </div>
       </div>
 
-      <!-- Compiled Style Prompt Card -->
+      <!-- Compiled style prompt -->
       <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-3">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between gap-2 flex-wrap">
           <div class="flex items-center gap-2">
             <i class="fa-solid fa-terminal text-cyan-400 text-sm"></i>
             <h2 class="text-sm font-semibold tracking-wide uppercase text-slate-300">Style of Music Prompt</h2>
           </div>
-          <!-- Char Counter -->
-          <div class="flex items-center gap-1.5 text-xs font-mono">
-            <span id="char-count" class="font-bold text-cyan-400">0</span>
-            <span class="text-slate-500">/ 120 chars target</span>
+          <div class="flex items-center gap-2">
+            <select id="length-mode" onchange="onModeChange()" class="bg-slate-800/90 border border-slate-700/80 text-[11px] text-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:border-cyan-400" title="Switch between a short focused prompt and a longer detailed one">
+              <option value="short">Short &amp; focused</option>
+              <option value="detailed">Detailed</option>
+            </select>
+            <div class="flex items-center gap-1.5 text-xs font-mono">
+              <span id="char-count" class="font-bold text-cyan-400">0</span>
+              <span class="text-slate-500">/ <span id="char-target">120</span> target</span>
+            </div>
           </div>
         </div>
 
-        <!-- Progress bar for 120 target / 200 max -->
         <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
           <div id="char-progress" class="h-full bg-cyan-400 transition-all duration-200" style="width: 0%"></div>
         </div>
 
-        <div class="relative">
-          <textarea id="compiled-prompt" rows="3"
-                    oninput="handlePromptDirectEdit(this.value)"
-                    placeholder="Selected chips will appear here, or type freely..."
-                    class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-xl p-3 text-xs sm:text-sm font-mono leading-relaxed focus:outline-none focus:border-cyan-400 transition-all resize-none"></textarea>
-        </div>
+        <!-- Selected chips (removable) -->
+        <div id="selected-chips" class="flex flex-wrap gap-1.5 min-h-[1.5rem]"></div>
 
-        <div class="flex items-center justify-between pt-1">
-          <p class="text-[11px] text-slate-400">
+        <textarea id="compiled-prompt" rows="3"
+                  oninput="handlePromptDirectEdit(this.value)"
+                  placeholder="Selected chips will appear here, or type freely..."
+                  class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-xl p-3 text-xs sm:text-sm font-mono leading-relaxed focus:outline-none focus:border-cyan-400 transition-all resize-none"></textarea>
+
+        <div id="style-warnings" class="flex flex-col gap-1"></div>
+
+        <div class="flex items-center justify-between pt-1 gap-3">
+          <p class="text-[11px] text-slate-400" id="length-hint">
             <i class="fa-solid fa-circle-info mr-1 text-slate-500"></i>
-            Suno yields best style fidelity under 120 characters.
+            <span id="length-hint-text"></span>
           </p>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 shrink-0">
             <button onclick="clearStyleChips()" class="text-xs text-slate-400 hover:text-slate-200 px-2.5 py-1.5 rounded-lg hover:bg-slate-800 transition-colors">
               Clear
             </button>
@@ -227,14 +236,35 @@
         </div>
       </div>
 
+      <!-- Exclude styles -->
+      <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-5 shadow-xl flex flex-col gap-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-ban text-rose-400 text-sm"></i>
+            <h2 class="text-sm font-semibold tracking-wide uppercase text-slate-300">Exclude Styles</h2>
+          </div>
+          <span class="text-xs text-slate-400">Things you don't want</span>
+        </div>
+        <div class="flex flex-wrap gap-1.5" id="group-exclude"></div>
+        <textarea id="exclude-prompt" rows="2"
+                  oninput="handleExcludeDirectEdit(this.value)"
+                  placeholder="e.g. autotune, choir, screaming"
+                  class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-xl p-3 text-xs sm:text-sm font-mono leading-relaxed focus:outline-none focus:border-rose-400 transition-all resize-none"></textarea>
+        <div class="flex items-center justify-end gap-2">
+          <button onclick="clearExclude()" class="text-xs text-slate-400 hover:text-slate-200 px-2.5 py-1.5 rounded-lg hover:bg-slate-800 transition-colors">Clear</button>
+          <button onclick="copyExclude()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all">
+            <i class="fa-regular fa-copy"></i> Copy Exclude
+          </button>
+        </div>
+      </div>
+
     </section>
 
-    <!-- RIGHT COLUMN: Lyric & Metatag Studio (7 cols) -->
+    <!-- RIGHT: Lyrics -->
     <section class="lg:col-span-7 flex flex-col gap-4">
 
-      <!-- Lyric Editor Card -->
       <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-5 shadow-xl flex flex-col gap-4 flex-1">
-        
+
         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
           <div>
             <div class="flex items-center gap-2">
@@ -244,77 +274,26 @@
             <p class="text-[11px] text-slate-400">Click a tag below to insert it at your cursor in the lyrics</p>
           </div>
 
-          <!-- Quick Structure Template Helpers -->
-          <div class="flex items-center gap-1.5">
-            <button onclick="insertTemplateSkeleton('pop')" class="text-[11px] px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition-colors" title="Insert complete standard verse/chorus skeleton">
-              Pop Layout
-            </button>
-            <button onclick="insertTemplateSkeleton('edm')" class="text-[11px] px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition-colors" title="Insert build & drop layout">
-              EDM/Drop Layout
-            </button>
-          </div>
+          <div class="flex flex-wrap items-center gap-1.5" id="layout-buttons"></div>
         </div>
 
-        <!-- Metatag Inserter Toolbars -->
-        <div class="flex flex-col gap-2.5 bg-slate-950/60 p-3 rounded-xl border border-slate-800/70">
-          
-          <!-- Structural Metatags -->
-          <div class="flex items-start sm:items-center gap-2">
-            <span class="text-[10px] font-mono font-semibold uppercase text-violet-400 tracking-wider w-16 shrink-0">Structure:</span>
-            <div class="flex flex-wrap gap-1">
-              <button onclick="insertMetatag('[Intro]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-violet-600/30 text-slate-300 hover:text-violet-200 border border-slate-700/60 hover:border-violet-500/40 transition-colors">[Intro]</button>
-              <button onclick="insertMetatag('[Verse 1]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-violet-600/30 text-slate-300 hover:text-violet-200 border border-slate-700/60 hover:border-violet-500/40 transition-colors">[Verse 1]</button>
-              <button onclick="insertMetatag('[Pre-Chorus]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-violet-600/30 text-slate-300 hover:text-violet-200 border border-slate-700/60 hover:border-violet-500/40 transition-colors">[Pre-Chorus]</button>
-              <button onclick="insertMetatag('[Chorus]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-violet-600/30 text-slate-300 hover:text-violet-200 border border-slate-700/60 hover:border-violet-500/40 transition-colors">[Chorus]</button>
-              <button onclick="insertMetatag('[Verse 2]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-violet-600/30 text-slate-300 hover:text-violet-200 border border-slate-700/60 hover:border-violet-500/40 transition-colors">[Verse 2]</button>
-              <button onclick="insertMetatag('[Bridge]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-violet-600/30 text-slate-300 hover:text-violet-200 border border-slate-700/60 hover:border-violet-500/40 transition-colors">[Bridge]</button>
-              <button onclick="insertMetatag('[Outro]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-violet-600/30 text-slate-300 hover:text-violet-200 border border-slate-700/60 hover:border-violet-500/40 transition-colors">[Outro]</button>
-              <button onclick="insertMetatag('[End]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-rose-600/30 text-slate-300 hover:text-rose-200 border border-slate-700/60 hover:border-rose-500/40 transition-colors">[End]</button>
-            </div>
-          </div>
+        <!-- Metatag toolbars (rendered by JS) -->
+        <div class="flex flex-col gap-2.5 bg-slate-950/60 p-3 rounded-xl border border-slate-800/70" id="metatag-toolbar"></div>
 
-          <!-- Vocal & Performance Tags -->
-          <div class="flex items-start sm:items-center gap-2">
-            <span class="text-[10px] font-mono font-semibold uppercase text-cyan-400 tracking-wider w-16 shrink-0">Vocal:</span>
-            <div class="flex flex-wrap gap-1">
-              <button onclick="insertMetatag('[Female Vocal]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-cyan-600/30 text-slate-300 hover:text-cyan-200 border border-slate-700/60 hover:border-cyan-500/40 transition-colors">[Female Vocal]</button>
-              <button onclick="insertMetatag('[Male Vocal]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-cyan-600/30 text-slate-300 hover:text-cyan-200 border border-slate-700/60 hover:border-cyan-500/40 transition-colors">[Male Vocal]</button>
-              <button onclick="insertMetatag('[Layered Harmonies]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-cyan-600/30 text-slate-300 hover:text-cyan-200 border border-slate-700/60 hover:border-cyan-500/40 transition-colors">[Harmonies]</button>
-              <button onclick="insertMetatag('[Whisper]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-cyan-600/30 text-slate-300 hover:text-cyan-200 border border-slate-700/60 hover:border-cyan-500/40 transition-colors">[Whisper]</button>
-              <button onclick="insertMetatag('[Belting]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-cyan-600/30 text-slate-300 hover:text-cyan-200 border border-slate-700/60 hover:border-cyan-500/40 transition-colors">[Belting]</button>
-              <button onclick="insertMetatag('[Falsetto]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-cyan-600/30 text-slate-300 hover:text-cyan-200 border border-slate-700/60 hover:border-cyan-500/40 transition-colors">[Falsetto]</button>
-              <button onclick="insertMetatag('[Ad-lib: yeah, yeah]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-cyan-600/30 text-slate-300 hover:text-cyan-200 border border-slate-700/60 hover:border-cyan-500/40 transition-colors">[Ad-lib]</button>
-            </div>
-          </div>
-
-          <!-- Instrumental & Dynamic Cues -->
-          <div class="flex items-start sm:items-center gap-2">
-            <span class="text-[10px] font-mono font-semibold uppercase text-amber-400 tracking-wider w-16 shrink-0">Breaks:</span>
-            <div class="flex flex-wrap gap-1">
-              <button onclick="insertMetatag('[Instrumental Break]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-amber-600/30 text-slate-300 hover:text-amber-200 border border-slate-700/60 hover:border-amber-500/40 transition-colors">[Instrumental]</button>
-              <button onclick="insertMetatag('[Guitar Solo]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-amber-600/30 text-slate-300 hover:text-amber-200 border border-slate-700/60 hover:border-amber-500/40 transition-colors">[Guitar Solo]</button>
-              <button onclick="insertMetatag('[Drop - heavy bass]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-amber-600/30 text-slate-300 hover:text-amber-200 border border-slate-700/60 hover:border-amber-500/40 transition-colors">[Drop]</button>
-              <button onclick="insertMetatag('[Drum Breakdown]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-amber-600/30 text-slate-300 hover:text-amber-200 border border-slate-700/60 hover:border-amber-500/40 transition-colors">[Drum Break]</button>
-              <button onclick="insertMetatag('[Fade Out]')" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-amber-600/30 text-slate-300 hover:text-amber-200 border border-slate-700/60 hover:border-amber-500/40 transition-colors">[Fade Out]</button>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- Lyric Textarea with stats header -->
         <div class="relative flex-1 flex flex-col">
-          <div class="flex items-center justify-between py-1 px-1 text-xs text-slate-500">
+          <div class="flex items-center justify-between py-1 px-1 text-xs text-slate-500 gap-2 flex-wrap">
             <span id="lyric-stats">0 lines | 0 words</span>
-            <span class="text-[11px]">Suno Custom Mode: Lyric Box</span>
+            <span id="lyric-chars" class="font-mono text-[11px]"></span>
           </div>
 
           <textarea id="lyric-input" rows="15"
                     oninput="updateLyricStats()"
                     placeholder="Write your lyrics here or use the metatag buttons above to structure your song sections..."
                     class="w-full flex-1 bg-slate-950 border border-slate-800 text-slate-100 rounded-xl p-4 text-xs sm:text-sm font-mono leading-relaxed focus:outline-none focus:border-violet-500 transition-all resize-y"></textarea>
+
+          <div id="lyric-warnings" class="flex flex-col gap-1 mt-2"></div>
         </div>
 
-        <!-- Lyric Action Toolbar -->
         <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
           <div class="flex items-center gap-2">
             <button onclick="clearLyrics()" class="text-xs text-slate-400 hover:text-rose-400 px-3 py-1.5 rounded-lg hover:bg-slate-800 transition-colors">
@@ -326,11 +305,10 @@
           </div>
 
           <div class="flex items-center gap-2">
-            <button onclick="copyCombinedPackage()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all" title="Copies both style prompt and lyrics into a clean shareable block">
+            <button onclick="copyCombinedPackage()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all" title="Copies style, exclude and lyrics into one shareable block">
               <i class="fa-solid fa-share-nodes"></i>
               Copy Full Recipe
             </button>
-
             <button onclick="copyLyrics()" class="bg-violet-600 hover:bg-violet-500 text-white font-semibold px-4 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md shadow-violet-950/50">
               <i class="fa-regular fa-copy"></i>
               Copy Lyrics
@@ -344,120 +322,300 @@
 
   </main>
 
-  <!-- Footnote & Instructions -->
-  <footer class="border-t border-slate-900 bg-slate-950/80 py-4 px-4 text-center text-xs text-slate-500">
-    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-      <p>Pro tip: Avoid placing artist names in style prompts. Instead, describe the sound signatures (e.g. <code class="text-violet-400">gated reverb, Juno-106, 80s analog synth</code>).</p>
-      <p class="font-mono text-[11px] text-slate-600">Built for Suno v3 & v3.5/v4 workflows</p>
+  <footer class="border-t border-slate-900 bg-slate-950/80 py-4 px-4 text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto flex flex-col gap-1.5">
+      <p>Pro tip: avoid artist names in style prompts. Describe the sound instead (e.g. <code class="text-violet-400">gated reverb snare, analog synth pad, 80s</code>).</p>
+      <p>Tip: keep bracket tags short, like <code class="text-violet-400">[Chorus - soaring harmonies]</code>. Long descriptions in brackets are more likely to be ignored or sung. Put the detail in the style prompt.</p>
+      <p class="font-mono text-[11px] text-slate-600">Suno's limits change between versions. Edit STYLE_LIMITS and LYRIC_LIMIT at the top of the script to match.</p>
     </div>
   </footer>
 
-  <!-- Application Logic -->
   <script>
-    // Tag definitions
+    // ---------------------------------------------------------------
+    // SETTINGS: Suno changes these between versions. Check the current
+    // limits in Suno and edit the numbers here.
+    // ---------------------------------------------------------------
+    const STYLE_LIMITS = {
+      short:    { target: 120, max: 200,  hint: 'Short prompts keep Suno focused on your main genre and mood.' },
+      detailed: { target: 500, max: 1000, hint: 'Newer Suno models take longer style prompts. Detail helps, but keep it coherent.' }
+    };
+    const LYRIC_LIMIT = 5000;
+    const LONG_TAG_LENGTH = 60; // bracket tags longer than this get a warning
+
+    // ---------------------------------------------------------------
+    // Tag data (all lowercase so chips always match typed text)
+    // ---------------------------------------------------------------
     const TAG_DATA = {
       genre: [
-        'synthwave', 'indie folk', 'dark electro', 'boom bap', 'city pop', 
-        'math rock', 'neo-soul', 'liquid dnb', 'post-punk', 'midwest emo',
-        'melodic techno', 'cinematic orchestral', 'afrobeats', 'dreampop'
+        'synthwave', 'indie folk', 'dark electro', 'industrial', 'boom bap', 'jazz samples', 'lo-fi hip hop',
+        'city pop', 'math rock', 'progressive metal', 'djent', 'neo-soul', 'liquid dnb', 'post-punk',
+        'midwest emo', 'melodic techno', 'house', 'trap', 'drill', 'cinematic orchestral', 'afrobeats',
+        'dreampop', 'country', 'gospel soul', 'k-pop', 'pop punk', 'reggae', 'bossa nova', 'hyperpop', 'acoustic ballad'
       ],
       tempo: [
-        '80 BPM', '95 BPM', '115 BPM', '128 BPM', '140 BPM', '174 BPM', 
+        '70 bpm', '80 bpm', '95 bpm', '115 bpm', '128 bpm', '140 bpm', '160 bpm', '174 bpm',
         'half-time groove', 'driving 4-on-the-floor', 'syncopated swing', 'slow burn'
       ],
       instruments: [
-        'analog synth pad', 'clean electric guitar', 'fingerpicked acoustic', 
-        'distorted 808 bass', 'live acoustic drums', 'slap bass', ' Rhodes piano', 
-        'brass horns', 'tape saturated strings', 'glitch percussion'
+        'analog synth pad', 'clean electric guitar', 'fingerpicked acoustic', 'distorted 808 bass',
+        'live acoustic drums', 'slap bass', 'rhodes piano', 'brass horns', 'tape saturated strings',
+        'glitch percussion', 'pedal steel guitar', 'hammond organ', 'downtuned heavy guitars',
+        'distorted power chords', 'punchy synth bass', 'string quartet', 'saxophone', 'upright bass'
       ],
       texture: [
-        'lo-fi cassette saturation', 'spacious hall reverb', 'crisp sidechain compression', 
-        'vinyl crackle', 'distorted fuzz', 'warm vintage tape', 'wide stereo image', 'dry close-mic'
+        'lo-fi cassette saturation', 'spacious hall reverb', 'crisp sidechain compression', 'vinyl crackle',
+        'distorted fuzz', 'warm vintage tape', 'wide stereo image', 'dry close-mic', 'gated reverb snare', 'tape delay'
+      ],
+      vocals: [
+        'female vocals', 'male vocals', 'soaring female vocals', 'raspy male vocal', 'male rap vocal',
+        'whispered vocals', 'falsetto', 'choir', 'duet', 'layered harmonies', 'autotuned vocals'
       ],
       mood: [
-        'melancholic', 'euphoric', 'aggressive grit', 'intimate & emotional', 
-        'nostalgic', 'soaring female vocals', 'raspy male vocal', 'chill atmospheric'
+        'melancholic', 'euphoric', 'aggressive grit', 'intimate & emotional', 'nostalgic', 'chill atmospheric',
+        'epic', 'energetic', 'dark', 'dreamy', 'uplifting', 'romantic'
       ]
     };
 
-    // State
-    let selectedChips = new Set();
+    const EXCLUDE_TAGS = [
+      'autotune', 'vocals', 'choir', 'screaming', 'rap', 'drums', 'electric guitar',
+      'brass', 'heavy distortion', 'edm drops', 'reverb', 'synths'
+    ];
 
-    // Presets
-    const PRESETS = {
-      synthwave: {
-        chips: ['synthwave', '128 BPM', 'analog synth pad', 'crisp sidechain compression', 'driving 4-on-the-floor', 'nostalgic'],
-        lyrics: `[Intro - analog arpeggiator, gated reverb snare, 128 BPM]\n\n[Verse 1 - dry intimate male vocals, filtered drums]\nNeon reflections on a wet boulevard\nSpeeding away from the memories that scarred\nDashboard is glowing in magenta and blue\nEvery road marker brings me closer to you\n\n[Pre-Chorus - rising synth sweep, rolling snare build]\nEngine is humming, RPMs rise\nMidnight horizon caught in your eyes\n\n[Chorus - high energy, full sidechain synths, soaring layered harmonies]\nWe're driving past the edge of the night\nChasing the glow of the electric light\nNo looking back now, the city's behind\nTwo fading shadows impossible to find!\n\n[Drop - heavy 80s bassline, driving synth lead]\n\n[Verse 2 - punchy groove enters, clean guitar chords]\nHeadlights are cutting straight into the mist\nWhispering secrets we couldn't resist\n\n[Chorus - maximum energy, belted vocals]\nWe're driving past the edge of the night\nChasing the glow of the electric light\nNo looking back now, the city's behind\nTwo fading shadows impossible to find!\n\n[Outro - repeating synth riff, vocals fading]\nEdge of the night...\nFading out...\n\n[End - final synth chord reverberates]`
+    // Order tags are compiled in (Suno tends to weight the start of the prompt most)
+    const ORDER = ['genre', 'tempo', 'instruments', 'texture', 'vocals', 'mood'];
+    const norm = t => t.trim().toLowerCase();
+    const TAG_RANK = {};
+    ORDER.forEach((key, i) => TAG_DATA[key].forEach(t => { TAG_RANK[norm(t)] = i; }));
+    const GENRE_SET = new Set(TAG_DATA.genre.map(norm));
+
+    // ---------------------------------------------------------------
+    // Metatag toolbar (the label is exactly what gets inserted)
+    // ---------------------------------------------------------------
+    const COLOR_CLASSES = {
+      violet: 'bg-slate-800 hover:bg-violet-600/30 text-slate-300 hover:text-violet-200 border border-slate-700/60 hover:border-violet-500/40',
+      cyan:   'bg-slate-800 hover:bg-cyan-600/30 text-slate-300 hover:text-cyan-200 border border-slate-700/60 hover:border-cyan-500/40',
+      amber:  'bg-slate-800 hover:bg-amber-600/30 text-slate-300 hover:text-amber-200 border border-slate-700/60 hover:border-amber-500/40',
+      rose:   'bg-slate-800 hover:bg-rose-600/30 text-slate-300 hover:text-rose-200 border border-slate-700/60 hover:border-rose-500/40'
+    };
+    const LABEL_CLASSES = { violet: 'text-violet-400', cyan: 'text-cyan-400', amber: 'text-amber-400' };
+
+    const METATAG_GROUPS = [
+      { label: 'Structure:', color: 'violet', tags: ['[Intro]', '[Verse 1]', '[Verse 2]', '[Pre-Chorus]', '[Chorus]', '[Hook]', '[Refrain]', '[Bridge]', '[Interlude]', '[Outro]', '[End]'] },
+      { label: 'Vocal:', color: 'cyan', tags: ['[Female Vocal]', '[Male Vocal]', '[Duet]', '[Layered Harmonies]', '[Spoken Word]', '[Whisper]', '[Belting]', '[Falsetto]', '[Choir]', '[Ad-libs]'] },
+      { label: 'Breaks:', color: 'amber', tags: ['[Instrumental Break]', '[Guitar Solo]', '[Saxophone Solo]', '[Piano Solo]', '[Build-up]', '[Drop]', '[Drum Breakdown]', '[Break]', '[Fade Out]'] }
+    ];
+
+    // ---------------------------------------------------------------
+    // Lyric layouts
+    // ---------------------------------------------------------------
+    const LAYOUTS = {
+      pop: {
+        label: 'Pop',
+        text: `[Intro]\n\n[Verse 1]\nLine 1\nLine 2\nLine 3\nLine 4\n\n[Pre-Chorus]\nLine 5\nLine 6\n\n[Chorus]\nMain hook line\nSecond hook line\nClimax line\nRefrain line\n\n[Verse 2]\nLine 7\nLine 8\nLine 9\nLine 10\n\n[Chorus]\nMain hook line\nSecond hook line\nClimax line\nRefrain line\n\n[Bridge]\nBridge line 1\nBridge line 2\n\n[Chorus - biggest version]\nMain hook line\nSecond hook line\nClimax line\nRefrain line\n\n[Outro]\n\n[End]`
       },
-      indiefolk: {
-        chips: ['indie folk', '80 BPM', 'fingerpicked acoustic', 'warm vintage tape', 'intimate & emotional', 'raspy male vocal'],
-        lyrics: `[Intro - gentle fingerpicked acoustic guitar, tape hiss, slow 80 BPM]\n\n[Verse 1 - close mic intimate male vocal, subtle upright bass]\nCoffee is cold on the kitchen sill\nMorning light quiet across the hill\nOld wooden floorboards remember your tread\nEchoes of promises quietly said\n\n[Chorus - acoustic guitar swells, warm vocal harmonies]\nTake me back to the river bend\nWhere the summer days never had to end\nCarved our names in the willow tree\nBack when the future was you and me\n\n[Verse 2 - soft brush snare enters, cello pad]\nLetters unread in the bottom drawer\nI don't look back at the lock on the door\n\n[Bridge - stripped down, solo acoustic, whisper tone]\nTime is a river that washes the clay\nCarrying all of our yesterdays away\n\n[Chorus - full band warm swell, rich harmonies]\nTake me back to the river bend\nWhere the summer days never had to end\nCarved our names in the willow tree\nBack when the future was you and me\n\n[Outro - whistling melody, acoustic guitar fades]\n\n[End - single acoustic strum rings out]`
+      edm: {
+        label: 'EDM / Drop',
+        text: `[Intro - filtered synths]\n\n[Verse 1]\nFirst verse line\nSecond verse line\n\n[Build-up]\nHold on tight, here it comes\n\n[Drop]\n\n[Breakdown]\nSlow down the pulse\n\n[Build-up]\n\n[Drop]\n\n[Outro]\n\n[End]`
       },
-      cyberpunk: {
-        chips: ['dark electro', '140 BPM', 'distorted 808 bass', 'glitch percussion', 'aggressive grit', 'crisp sidechain compression'],
-        lyrics: `[Intro - metallic percussion, sub bass drone, ominous riser]\n\n[Verse 1 - whispered robotic cadence, industrial noise]\nChrome in the marrow, circuit in the eye\nAcid rain falling from a blackened sky\nMegacity towers pierce into the cloud\nScreaming in the static of a dying crowd\n\n[Pre-Chorus - industrial kick build, frantic stutter]\nCode execution: ready to ignite\nCut the mainline, kill the power grid tonight\n\n[Drop - aggressive distorted synth lead, 140 BPM, crushing 808]\n\n[Chorus - aggressive processed vocals, heavy layered distortion]\nOverclock the system till the wires break!\nHow much more can this synthetic heart take?\nSignal lost! Static high!\nBurn it to the ground, watch the neon die!\n\n[Bridge - silence for 1 bar, heavy low pass filter]\nRebooting...\n\n[Chorus - maximum energy, frantic glitch fills]\nOverclock the system till the wires break!\nHow much more can this synthetic heart take?\nSignal lost! Static high!\nBurn it to the ground, watch the neon die!\n\n[Outro - glitch decay, alarm klaxon fading]\n\n[End - abrupt power cut]`
+      hiphop: {
+        label: 'Hip-Hop',
+        text: `[Intro]\n\n[Hook]\nHook line 1\nHook line 2\nHook line 3\nHook line 4\n\n[Verse 1]\nBar 1\nBar 2\nBar 3\nBar 4\nBar 5\nBar 6\nBar 7\nBar 8\n\n[Hook]\nHook line 1\nHook line 2\nHook line 3\nHook line 4\n\n[Verse 2]\nBar 1\nBar 2\nBar 3\nBar 4\nBar 5\nBar 6\nBar 7\nBar 8\n\n[Hook]\n\n[Outro]\n\n[End]`
       },
-      boombap: {
-        chips: ['boom bap', '95 BPM', ' Rhodes piano', 'vinyl crackle', 'lo-fi cassette saturation', 'syncopated swing'],
-        lyrics: `[Intro - vinyl crackle, dusty jazz piano chords, head-nod drum count]\nOne, two... check it\n\n[Verse 1 - smooth conversational flow, punchy kick and snare]\nSidewalk philosophy, steam from the grate\nWriting my verses while the train running late\nInk on my knuckles, coffee in the cup\nWatching the borough as the sun waking up\nWordplay sharp like a newly cut groove\nKeep the pocket steady make the whole room move\n\n[Chorus - scratched vocal sample, warm upright bassline]\nBack in the rhythm of the city block\nTick tock never stop, rocking around the clock\nSmooth like butter on a summer night\nGolden era cadence when the groove is right\n\n[Verse 2 - upright bass walks, horn stab on the two and four]\nChasing the cadence that my heroes laid down\nFrom the underground tunnels to the top of the town\n\n[Outro - piano solo vamp, vocal ad-libs fade]\nYeah, keep it in the pocket\nJust let that tape roll...\n\n[End - needle lift from vinyl]`
+      rock: {
+        label: 'Rock',
+        text: `[Intro - riff]\n\n[Verse 1]\nLine 1\nLine 2\nLine 3\nLine 4\n\n[Chorus]\nBig hook line\nSecond hook line\nClimax line\nRefrain line\n\n[Verse 2]\nLine 5\nLine 6\nLine 7\nLine 8\n\n[Chorus]\nBig hook line\nSecond hook line\nClimax line\nRefrain line\n\n[Guitar Solo]\n\n[Bridge - stripped back]\nBridge line 1\nBridge line 2\n\n[Chorus - final, loudest]\nBig hook line\nSecond hook line\nClimax line\nRefrain line\n\n[Outro]\n\n[End]`
       },
-      citypop: {
-        chips: ['city pop', '115 BPM', 'slap bass', 'brass horns', 'wide stereo image', 'soaring female vocals'],
-        lyrics: `[Intro - sparkly FM synth bell, punchy slap bass riff, brass hits, 115 BPM]\n\n[Verse 1 - bright Japanese female vocal, breezy syncopation]\nSunset across Tokyo Bay\nWatching the pastel lights fade away\nSlip on my heels, turn the radio dial\nThinking 'bout you with a bittersweet smile\n\n[Pre-Chorus - rising brass fanfare, funky rhythm guitar scratch]\nDon't let the evening slip through our hands\nDance to the melody nobody understands\n\n[Chorus - full brass section, soaring lead vocals, lush backing harmonies]\nMidnight highway, driving into dawn!\nEven when the glittering lights are gone\nStay with me under the sparkling sky\nPlastic love whispers as the cars speed by!\n\n[Saxophone Solo - breezy, melodic, smooth vintage tone]\n\n[Outro - slap bass groove, repeating vocal refrain with harmonies]\nStay with me...\nMidnight highway...\n\n[Fade Out - brass riff repeats to silence]`
+      ballad: {
+        label: 'Ballad',
+        text: `[Intro - piano only]\n\n[Verse 1 - soft]\nLine 1\nLine 2\nLine 3\nLine 4\n\n[Chorus - building]\nHook line\nSecond hook line\nClimax line\nRefrain line\n\n[Verse 2]\nLine 5\nLine 6\nLine 7\nLine 8\n\n[Chorus - fuller]\nHook line\nSecond hook line\nClimax line\nRefrain line\n\n[Bridge - emotional peak]\nBridge line 1\nBridge line 2\n\n[Chorus - final, belted]\nHook line\nSecond hook line\nClimax line\nRefrain line\n\n[Outro - quiet]\n\n[End]`
       },
-      progmetal: {
-        chips: ['math rock', '140 BPM', 'clean electric guitar', 'distorted fuzz', 'aggressive grit', 'half-time groove'],
-        lyrics: `[Intro - complex polyrhythmic 7/8 guitar riff, double bass drum build]\n\n[Verse 1 - dry clean vocals, syncopated palm-muted guitar]\nFractured coordinates, shifting the grid\nBurying memories of everything we did\nCalculating fractures in the quantum spine\nTicking off seconds on a borrowed timeline\n\n[Pre-Chorus - rising tension, heavy floor tom groove]\nWatch the fracture split in two\nThere's no anchor left for you\n\n[Chorus - heavy drop-tuned riff, soaring belted vocal]\nCollapse the monolith into the deep!\nPromises you made that you could never keep!\nFractal patterns crashing down\nIn the silence where we drown!\n\n[Instrumental Breakdown - crushing polymetric djent groove]\n\n[Outro - clean guitar taps, ambient delay fade]\n\n[End - sudden cut on snare rimshot]`
+      short: {
+        label: 'Short Song',
+        text: `[Verse 1]\nLine 1\nLine 2\nLine 3\nLine 4\n\n[Chorus]\nHook line\nSecond hook line\nClimax line\nRefrain line\n\n[Verse 2]\nLine 5\nLine 6\nLine 7\nLine 8\n\n[Chorus]\nHook line\nSecond hook line\nClimax line\nRefrain line\n\n[End]`
       }
     };
 
-    // Render chips into UI
-    function renderChipGroups() {
-      renderGroup('group-genre', TAG_DATA.genre);
-      renderGroup('group-tempo', TAG_DATA.tempo);
-      renderGroup('group-instruments', TAG_DATA.instruments);
-      renderGroup('group-texture', TAG_DATA.texture);
-      renderGroup('group-mood', TAG_DATA.mood);
+    // ---------------------------------------------------------------
+    // Recipes (style chips + exclude + lyrics)
+    // ---------------------------------------------------------------
+    const PRESETS = {
+      synthwave: {
+        label: '80s Neon Synthwave',
+        chips: ['synthwave', '128 bpm', 'analog synth pad', 'gated reverb snare', 'crisp sidechain compression', 'driving 4-on-the-floor', 'nostalgic'],
+        exclude: ['acoustic guitar', 'rap'],
+        lyrics: `[Intro - analog arpeggio, gated snare]\n\n[Verse 1 - dry male vocal]\nNeon reflections on a wet boulevard\nSpeeding away from the memories that scarred\nDashboard is glowing in magenta and blue\nEvery road marker brings me closer to you\n\n[Pre-Chorus - rising synth sweep]\nEngine is humming, RPMs rise\nMidnight horizon caught in your eyes\n\n[Chorus - soaring harmonies]\nWe're driving past the edge of the night\nChasing the glow of the electric light\nNo looking back now, the city's behind\nTwo fading shadows impossible to find!\n\n[Drop]\n\n[Verse 2]\nHeadlights are cutting straight into the mist\nWhispering secrets we couldn't resist\n\n[Chorus - biggest version]\nWe're driving past the edge of the night\nChasing the glow of the electric light\nNo looking back now, the city's behind\nTwo fading shadows impossible to find!\n\n[Outro - synth riff, fading]\nEdge of the night...\nFading out...\n\n[End]`
+      },
+      indiefolk: {
+        label: 'Intimate Indie Folk',
+        chips: ['indie folk', '80 bpm', 'fingerpicked acoustic', 'warm vintage tape', 'raspy male vocal', 'intimate & emotional'],
+        exclude: ['heavy distortion', 'edm drops'],
+        lyrics: `[Intro - fingerpicked acoustic guitar]\n\n[Verse 1 - close mic, male vocal]\nCoffee is cold on the kitchen sill\nMorning light quiet across the hill\nOld wooden floorboards remember your tread\nEchoes of promises quietly said\n\n[Chorus - warm harmonies]\nTake me back to the river bend\nWhere the summer days never had to end\nCarved our names in the willow tree\nBack when the future was you and me\n\n[Verse 2 - soft brushes enter]\nLetters unread in the bottom drawer\nI don't look back at the lock on the door\n\n[Bridge - stripped back, whisper]\nTime is a river that washes the clay\nCarrying all of our yesterdays away\n\n[Chorus - full band swell]\nTake me back to the river bend\nWhere the summer days never had to end\nCarved our names in the willow tree\nBack when the future was you and me\n\n[Outro - whistling, guitar fades]\n\n[End]`
+      },
+      cyberpunk: {
+        label: 'Cyberpunk Industrial',
+        chips: ['industrial', 'dark electro', '140 bpm', 'distorted 808 bass', 'glitch percussion', 'crisp sidechain compression', 'aggressive grit'],
+        exclude: ['acoustic guitar', 'choir'],
+        lyrics: `[Intro - metallic percussion, sub drone]\n\n[Verse 1 - whispered, robotic]\nChrome in the marrow, circuit in the eye\nAcid rain falling from a blackened sky\nMegacity towers pierce into the cloud\nScreaming in the static of a dying crowd\n\n[Pre-Chorus - industrial kick build]\nCode execution: ready to ignite\nCut the mainline, kill the power grid tonight\n\n[Drop]\n\n[Chorus - processed vocals, heavy]\nOverclock the system till the wires break!\nHow much more can this synthetic heart take?\nSignal lost! Static high!\nBurn it to the ground, watch the neon die!\n\n[Bridge - low pass filter]\nRebooting...\n\n[Chorus - maximum energy]\nOverclock the system till the wires break!\nHow much more can this synthetic heart take?\nSignal lost! Static high!\nBurn it to the ground, watch the neon die!\n\n[Outro - glitch decay]\n\n[End - power cut]`
+      },
+      boombap: {
+        label: '90s Jazzy Boom Bap',
+        chips: ['boom bap', 'jazz samples', '95 bpm', 'rhodes piano', 'upright bass', 'vinyl crackle', 'male rap vocal', 'nostalgic'],
+        exclude: ['autotune', 'edm drops'],
+        lyrics: `[Intro - dusty piano, vinyl crackle]\nOne, two... check it\n\n[Verse 1 - smooth conversational flow]\nSidewalk philosophy, steam from the grate\nWriting my verses while the train running late\nInk on my knuckles, coffee in the cup\nWatching the borough as the sun waking up\nWordplay sharp like a newly cut groove\nKeep the pocket steady make the whole room move\n\n[Hook - scratched vocal sample]\nBack in the rhythm of the city block\nTick tock never stop, rocking around the clock\nSmooth like butter on a summer night\nGolden era cadence when the groove is right\n\n[Verse 2 - horn stab on the two and four]\nChasing the cadence that my heroes laid down\nFrom the underground tunnels to the top of the town\n\n[Outro - piano vamp]\nYeah, keep it in the pocket\nJust let that tape roll...\n\n[End]`
+      },
+      citypop: {
+        label: 'Tokyo City Pop',
+        chips: ['city pop', '115 bpm', 'slap bass', 'brass horns', 'wide stereo image', 'soaring female vocals', 'uplifting'],
+        exclude: ['screaming', 'heavy distortion'],
+        lyrics: `[Intro - FM synth bell, slap bass riff, brass hits]\n\n[Verse 1 - bright female vocal]\nSunset across Tokyo Bay\nWatching the pastel lights fade away\nSlip on my heels, turn the radio dial\nThinking 'bout you with a bittersweet smile\n\n[Pre-Chorus - rising brass]\nDon't let the evening slip through our hands\nDance to the melody nobody understands\n\n[Chorus - full brass, lush harmonies]\nMidnight highway, driving into dawn!\nEven when the glittering lights are gone\nStay with me under the sparkling sky\nPlastic love whispers as the cars speed by!\n\n[Saxophone Solo]\n\n[Outro - slap bass groove, repeating refrain]\nStay with me...\nMidnight highway...\n\n[Fade Out]`
+      },
+      progmetal: {
+        label: 'Modern Djent Metal',
+        chips: ['progressive metal', 'djent', '140 bpm', 'downtuned heavy guitars', 'half-time groove', 'distorted fuzz', 'aggressive grit'],
+        exclude: ['autotune', 'acoustic guitar'],
+        lyrics: `[Intro - polyrhythmic riff, double kick build]\n\n[Verse 1 - clean vocal, palm-muted guitars]\nFractured coordinates, shifting the grid\nBurying memories of everything we did\nCalculating fractures in the quantum spine\nTicking off seconds on a borrowed timeline\n\n[Pre-Chorus - rising tension]\nWatch the fracture split in two\nThere's no anchor left for you\n\n[Chorus - heavy riff, belted vocal]\nCollapse the monolith into the deep!\nPromises you made that you could never keep!\nFractal patterns crashing down\nIn the silence where we drown!\n\n[Instrumental Break - crushing djent groove]\n\n[Outro - clean guitar, ambient delay]\n\n[End - snare rimshot cut]`
+      },
+      lofi: {
+        label: 'Lo-fi Study Beats',
+        chips: ['lo-fi hip hop', '80 bpm', 'rhodes piano', 'upright bass', 'vinyl crackle', 'lo-fi cassette saturation', 'chill atmospheric'],
+        exclude: ['vocals', 'edm drops'],
+        lyrics: `[Instrumental]\n\n[Intro - rain, vinyl crackle, soft keys]\n\n[Main Melody - mellow rhodes, lazy drums]\n\n[Break - bass drops out, tape wobble]\n\n[Main Melody - warm bass returns]\n\n[Outro - fading, crackle remains]\n\n[End]`
+      },
+      country: {
+        label: 'Small-Town Country',
+        chips: ['country', '95 bpm', 'fingerpicked acoustic', 'pedal steel guitar', 'warm vintage tape', 'raspy male vocal', 'nostalgic'],
+        exclude: ['autotune', 'edm drops', 'rap'],
+        lyrics: `[Intro - acoustic guitar, pedal steel]\n\n[Verse 1 - male vocal, storytelling]\nOne red light and a feed store sign\nThat's the whole of the town where I left my youth behind\nDust on the dashboard, gravel on the tires\nSundays at the diner, Saturday night fires\n\n[Chorus - full band, harmonies]\nSo I'm heading home on a back road line\nWhere the porch lights wait and the sweet tea's fine\nI've seen the world and it's big and loud\nBut I'm happiest here with my feet on the ground\n\n[Verse 2]\nMama's got the kitchen smelling like spring\nDaddy's old truck still starts on the ring\n\n[Bridge - stripped back, steel guitar]\nEvery mile taught me what I need\nIt was never far, it was always these\n\n[Chorus - final, big finish]\nSo I'm heading home on a back road line\nWhere the porch lights wait and the sweet tea's fine\nI've seen the world and it's big and loud\nBut I'm happiest here with my feet on the ground\n\n[Outro - acoustic, fading]\n\n[End]`
+      },
+      gospel: {
+        label: 'Sunday Gospel Soul',
+        chips: ['gospel soul', '95 bpm', 'hammond organ', 'live acoustic drums', 'choir', 'soaring female vocals', 'uplifting'],
+        exclude: ['autotune', 'edm drops'],
+        lyrics: `[Intro - hammond organ swell]\n\n[Verse 1 - female vocal, soulful]\nI woke up this morning with the weight on my chest\nBut something in the light said I was blessed\nEvery storm I walked through left a song behind\nNow I'm standing in the sun with a peace of mind\n\n[Chorus - choir, belting]\nLift me up, lift me up, let the morning ring\nEvery hallelujah that my heart can bring\nLift me up, lift me up, I can feel it now\nI will rise again, I know how!\n\n[Verse 2]\nThey said the road was long, but I kept on walking\nHeld my head up high when the world kept talking\n\n[Bridge - choir softly, build]\nOne more step and I'm home\nOne more step and I'm home\n\n[Chorus - final, ad-libs]\nLift me up, lift me up, let the morning ring\nEvery hallelujah that my heart can bring\n\n[Outro - organ holds, choir fades]\n\n[End]`
+      },
+      kpop: {
+        label: 'K-Pop Dance Anthem',
+        chips: ['k-pop', '128 bpm', 'punchy synth bass', 'crisp sidechain compression', 'female vocals', 'layered harmonies', 'energetic'],
+        exclude: ['screaming', 'heavy distortion'],
+        lyrics: `[Intro - synth stab, vocal chant]\n\n[Verse 1 - female vocal, rhythmic]\nLights go down and the city is mine\nWalking in step with the beat on the line\nEyes on me like a spotlight glow\nEvery move that I make, you already know\n\n[Pre-Chorus - rising build]\nCount it down, three, two, one\nFeel the whole room come undone\n\n[Chorus - catchy hook, layered harmonies]\nShine, shine, light it up tonight!\nMove, move, we're on fire, we're alive!\nShine, shine, never gonna stop\nWe're the ones who take it to the top!\n\n[Verse 2 - rap section]\nQuick on my feet, no time to wait\nWrite my own story, I'm the one who sets the pace\n\n[Bridge - half-time, vocal breath]\nOne more time, all together\n\n[Chorus - dance break, biggest version]\nShine, shine, light it up tonight!\nMove, move, we're on fire, we're alive!\n\n[Outro]\n\n[End]`
+      },
+      poppunk: {
+        label: 'Pop Punk Sing-Along',
+        chips: ['pop punk', '160 bpm', 'distorted power chords', 'live acoustic drums', 'raspy male vocal', 'energetic'],
+        exclude: ['autotune', 'choir', 'synths'],
+        lyrics: `[Intro - power chords, fast drums]\n\n[Verse 1 - male vocal, fast and raw]\nSkateboard scraped on the parking lot floor\nGot a hole in my sneaker and a battered door\nNo plans for tomorrow, no money for gas\nBut we're singing out loud and we're having a blast\n\n[Pre-Chorus - palm-muted build]\nWe don't need a reason, we don't need a plan\nJust the sound of the crowd and the band\n\n[Chorus - gang vocals]\nWhoa-oh, we're never growing up!\nWhoa-oh, fill the empty cup!\nTurn it up loud, we're alive tonight\nScream it with me, it's gonna be alright!\n\n[Verse 2]\nBack of the van with a busted amp\nChasing the summer and a dying lamp\n\n[Bridge - half-time, breakdown]\nHands in the air, hold it, hold it...\n\n[Chorus - final, everyone sings]\nWhoa-oh, we're never growing up!\nWhoa-oh, fill the empty cup!\n\n[Outro - crash ending]\n\n[End]`
+      },
+      cinematic: {
+        label: 'Epic Cinematic',
+        chips: ['cinematic orchestral', '80 bpm', 'tape saturated strings', 'brass horns', 'spacious hall reverb', 'choir', 'epic'],
+        exclude: ['rap', 'autotune', 'edm drops'],
+        lyrics: `[Intro - low strings, distant horn]\n\n[Verse 1 - female vocal, restrained]\nBeyond the hills where the old fires burn\nA thousand voices wait for the dawn's return\nEvery step we took was a story told\nIn the quiet of the ash and the gold\n\n[Build-up - timpani, rising strings]\n\n[Chorus - full choir, soaring]\nRise, rise, with the breaking sun!\nWe will carry the light till the work is done!\nRise, rise, over mountain and sea\nTill the whole world hears what we've come to be!\n\n[Interlude - solo cello]\n\n[Chorus - biggest version, brass and choir]\nRise, rise, with the breaking sun!\nWe will carry the light till the work is done!\n\n[Outro - strings fade to a single note]\n\n[End]`
+      }
+    };
+
+    // ---------------------------------------------------------------
+    // State + helpers
+    // ---------------------------------------------------------------
+    let selectedChips = new Set();
+    let excludedChips = new Set();
+    const el = id => document.getElementById(id);
+
+    const STORE_KEY = 'sunoStudio.session.v2';
+    const RECIPES_KEY = 'sunoStudio.recipes.v2';
+
+    function safeGet(key) {
+      try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; }
+    }
+    function safeSet(key, value) {
+      try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* storage unavailable */ }
     }
 
-    function renderGroup(containerId, tags) {
-      const container = document.getElementById(containerId);
+    function saveSession() {
+      safeSet(STORE_KEY, {
+        chips: Array.from(selectedChips),
+        exclude: Array.from(excludedChips),
+        lyrics: el('lyric-input').value,
+        mode: el('length-mode').value
+      });
+    }
+
+    function parseTags(val) {
+      return val.split(',').map(norm).filter(Boolean);
+    }
+
+    // ---------------------------------------------------------------
+    // Style chips
+    // ---------------------------------------------------------------
+    function renderGroup(containerId, tags, activeSet, activeClass, onToggle) {
+      const container = el(containerId);
       container.innerHTML = '';
       tags.forEach(tag => {
+        const key = norm(tag);
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = `text-[11px] px-2.5 py-1 rounded-lg border border-slate-800 bg-slate-900/80 text-slate-300 hover:border-slate-700 hover:text-white transition-all select-none ${selectedChips.has(tag) ? 'chip-active' : ''}`;
+        btn.className = 'text-[11px] px-2.5 py-1 rounded-lg border border-slate-800 bg-slate-900/80 text-slate-300 hover:border-slate-700 hover:text-white transition-all select-none' +
+          (activeSet.has(key) ? ' ' + activeClass : '');
         btn.textContent = tag;
-        btn.onclick = () => toggleChip(tag);
+        btn.onclick = () => onToggle(key);
         container.appendChild(btn);
       });
     }
 
+    function renderChipGroups() {
+      ORDER.forEach(key => renderGroup('group-' + key, TAG_DATA[key], selectedChips, 'chip-active', toggleChip));
+      renderGroup('group-exclude', EXCLUDE_TAGS, excludedChips, 'chip-exclude-active', toggleExclude);
+      renderSelectedChips();
+    }
+
+    function renderSelectedChips() {
+      const box = el('selected-chips');
+      box.innerHTML = '';
+      compileOrder().forEach(tag => {
+        const chip = document.createElement('span');
+        chip.className = 'inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-violet-500/15 border border-violet-500/40 text-violet-200';
+        const label = document.createElement('span');
+        label.textContent = tag;
+        const x = document.createElement('button');
+        x.type = 'button';
+        x.className = 'text-violet-300 hover:text-white leading-none';
+        x.textContent = '\u00d7';
+        x.title = 'Remove';
+        x.onclick = () => toggleChip(tag);
+        chip.appendChild(label);
+        chip.appendChild(x);
+        box.appendChild(chip);
+      });
+    }
+
+    function compileOrder() {
+      return Array.from(selectedChips)
+        .map((t, i) => ({ t, i, r: TAG_RANK[t] !== undefined ? TAG_RANK[t] : 99 }))
+        .sort((a, b) => a.r - b.r || a.i - b.i)
+        .map(o => o.t);
+    }
+
     function toggleChip(tag) {
-      if (selectedChips.has(tag)) {
-        selectedChips.delete(tag);
-      } else {
-        selectedChips.add(tag);
-      }
+      const key = norm(tag);
+      if (selectedChips.has(key)) selectedChips.delete(key); else selectedChips.add(key);
       syncUIFromChips();
     }
 
     function addCustomTag(tagText) {
       const clean = tagText.trim().replace(/^,+|,+$/g, '');
       if (!clean) return;
-      selectedChips.add(clean.toLowerCase());
+      selectedChips.add(norm(clean));
       syncUIFromChips();
     }
 
     function addCustomTagFromInput() {
-      const input = document.getElementById('custom-tag-input');
+      const input = el('custom-tag-input');
       if (input.value.trim()) {
         addCustomTag(input.value);
         input.value = '';
       }
     }
 
-    document.getElementById('custom-tag-input').addEventListener('keydown', (e) => {
+    el('custom-tag-input').addEventListener('keydown', e => {
       if (e.key === 'Enter') {
         e.preventDefault();
         addCustomTagFromInput();
@@ -466,39 +624,20 @@
 
     function syncUIFromChips() {
       renderChipGroups();
-      const compiled = Array.from(selectedChips).join(', ');
-      document.getElementById('compiled-prompt').value = compiled;
+      const compiled = compileOrder().join(', ');
+      el('compiled-prompt').value = compiled;
       updateCharCounter(compiled);
+      updateStyleWarnings();
+      saveSession();
     }
 
     function handlePromptDirectEdit(val) {
-      updateCharCounter(val);
-      // Re-sync chips that match exactly
-      const currentTags = val.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-      selectedChips = new Set(currentTags);
+      // Keep the user's own text and order; just re-sync highlighting
+      selectedChips = new Set(parseTags(val));
       renderChipGroups();
-    }
-
-    function updateCharCounter(text) {
-      const count = text.length;
-      const countEl = document.getElementById('char-count');
-      const progressEl = document.getElementById('char-progress');
-      countEl.textContent = count;
-
-      // 120 chars target calculation
-      const percentage = Math.min(100, Math.round((count / 120) * 100));
-      progressEl.style.width = `${percentage}%`;
-
-      if (count <= 120) {
-        countEl.className = 'font-bold text-cyan-400';
-        progressEl.className = 'h-full bg-cyan-400 transition-all duration-200';
-      } else if (count <= 180) {
-        countEl.className = 'font-bold text-amber-400';
-        progressEl.className = 'h-full bg-amber-400 transition-all duration-200';
-      } else {
-        countEl.className = 'font-bold text-rose-400';
-        progressEl.className = 'h-full bg-rose-500 transition-all duration-200';
-      }
+      updateCharCounter(val);
+      updateStyleWarnings();
+      saveSession();
     }
 
     function clearStyleChips() {
@@ -507,124 +646,370 @@
       showToast('Style prompt cleared');
     }
 
-    // Insert metatag at cursor in lyric textarea
+    function randomizeStyle() {
+      const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+      const pickN = (arr, n) => arr.slice().sort(() => Math.random() - 0.5).slice(0, n);
+      selectedChips = new Set([
+        pick(TAG_DATA.genre), pick(TAG_DATA.tempo),
+        ...pickN(TAG_DATA.instruments, 2),
+        pick(TAG_DATA.texture), pick(TAG_DATA.vocals), pick(TAG_DATA.mood)
+      ].map(norm));
+      syncUIFromChips();
+      showToast('Random style rolled');
+    }
+
+    // ---------------------------------------------------------------
+    // Exclude styles
+    // ---------------------------------------------------------------
+    function toggleExclude(tag) {
+      const key = norm(tag);
+      if (excludedChips.has(key)) excludedChips.delete(key); else excludedChips.add(key);
+      syncExclude();
+    }
+
+    function syncExclude() {
+      renderGroup('group-exclude', EXCLUDE_TAGS, excludedChips, 'chip-exclude-active', toggleExclude);
+      el('exclude-prompt').value = Array.from(excludedChips).join(', ');
+      updateStyleWarnings();
+      saveSession();
+    }
+
+    function handleExcludeDirectEdit(val) {
+      excludedChips = new Set(parseTags(val));
+      renderGroup('group-exclude', EXCLUDE_TAGS, excludedChips, 'chip-exclude-active', toggleExclude);
+      updateStyleWarnings();
+      saveSession();
+    }
+
+    function clearExclude() {
+      excludedChips.clear();
+      syncExclude();
+      showToast('Exclude list cleared');
+    }
+
+    // ---------------------------------------------------------------
+    // Counter, warnings, length mode
+    // ---------------------------------------------------------------
+    function currentLimits() {
+      return STYLE_LIMITS[el('length-mode').value] || STYLE_LIMITS.short;
+    }
+
+    function onModeChange() {
+      updateCharCounter(el('compiled-prompt').value);
+      saveSession();
+    }
+
+    function updateCharCounter(text) {
+      const lim = currentLimits();
+      const count = text.length;
+      const countEl = el('char-count');
+      const progressEl = el('char-progress');
+      countEl.textContent = count;
+      el('char-target').textContent = lim.target;
+      el('length-hint-text').textContent = lim.hint;
+
+      progressEl.style.width = Math.min(100, Math.round((count / lim.target) * 100)) + '%';
+
+      if (count <= lim.target) {
+        countEl.className = 'font-bold text-cyan-400';
+        progressEl.className = 'h-full bg-cyan-400 transition-all duration-200';
+      } else if (count <= lim.max) {
+        countEl.className = 'font-bold text-amber-400';
+        progressEl.className = 'h-full bg-amber-400 transition-all duration-200';
+      } else {
+        countEl.className = 'font-bold text-rose-400';
+        progressEl.className = 'h-full bg-rose-500 transition-all duration-200';
+      }
+    }
+
+    function updateStyleWarnings() {
+      const box = el('style-warnings');
+      box.innerHTML = '';
+      const tags = Array.from(selectedChips);
+      const warnings = [];
+
+      const bpmTags = tags.filter(t => /\b\d{2,3}\s*bpm\b/.test(t));
+      if (bpmTags.length > 1) warnings.push('More than one BPM is selected (' + bpmTags.join(', ') + '). Pick one.');
+
+      const genreCount = tags.filter(t => GENRE_SET.has(t)).length;
+      if (genreCount > 3) warnings.push(genreCount + ' genres selected. Suno usually does better with 1 to 3.');
+
+      const clash = tags.filter(t => excludedChips.has(t));
+      if (clash.length) warnings.push('In both Style and Exclude: ' + clash.join(', ') + '.');
+
+      warnings.forEach(w => {
+        const p = document.createElement('p');
+        p.className = 'text-[11px] text-amber-300 flex items-start gap-1.5';
+        const icon = document.createElement('i');
+        icon.className = 'fa-solid fa-triangle-exclamation mt-0.5 text-amber-400';
+        const span = document.createElement('span');
+        span.textContent = w;
+        p.appendChild(icon);
+        p.appendChild(span);
+        box.appendChild(p);
+      });
+    }
+
+    // ---------------------------------------------------------------
+    // Lyrics + metatags
+    // ---------------------------------------------------------------
+    function renderMetatagToolbar() {
+      const root = el('metatag-toolbar');
+      root.innerHTML = '';
+      METATAG_GROUPS.forEach(group => {
+        const row = document.createElement('div');
+        row.className = 'flex items-start gap-2';
+        const label = document.createElement('span');
+        label.className = 'text-[10px] font-mono font-semibold uppercase tracking-wider w-[4.5rem] shrink-0 pt-1 ' + LABEL_CLASSES[group.color];
+        label.textContent = group.label;
+        const wrap = document.createElement('div');
+        wrap.className = 'flex flex-wrap gap-1';
+        group.tags.forEach(tag => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          const color = tag === '[End]' ? 'rose' : group.color;
+          b.className = 'text-[11px] px-2 py-0.5 rounded-md transition-colors ' + COLOR_CLASSES[color];
+          b.textContent = tag;
+          b.onclick = () => insertMetatag(tag);
+          wrap.appendChild(b);
+        });
+        row.appendChild(label);
+        row.appendChild(wrap);
+        root.appendChild(row);
+      });
+    }
+
+    function renderLayoutButtons() {
+      const root = el('layout-buttons');
+      root.innerHTML = '';
+      Object.keys(LAYOUTS).forEach(key => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'text-[11px] px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition-colors';
+        b.textContent = LAYOUTS[key].label;
+        b.title = 'Insert a ' + LAYOUTS[key].label + ' layout';
+        b.onclick = () => insertTemplateSkeleton(key);
+        root.appendChild(b);
+      });
+    }
+
     function insertMetatag(tag) {
-      const textarea = document.getElementById('lyric-input');
+      const textarea = el('lyric-input');
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
       const text = textarea.value;
-
-      // Ensure proper newline spacing if inserted mid-text
-      let insertion = tag;
       const before = text.substring(0, start);
       const after = text.substring(end);
 
-      const needsLeadingNewline = before.length > 0 && !before.endsWith('\n');
-      const needsTrailingNewline = after.length > 0 && !after.startsWith('\n');
-
-      if (needsLeadingNewline) insertion = '\n\n' + insertion;
-      if (needsTrailingNewline) insertion = insertion + '\n';
-      else insertion = insertion + '\n';
+      let insertion = tag + '\n';
+      if (before.length > 0 && !before.endsWith('\n')) insertion = '\n\n' + insertion;
 
       textarea.value = before + insertion + after;
       const newCursor = start + insertion.length;
       textarea.setSelectionRange(newCursor, newCursor);
       textarea.focus();
       updateLyricStats();
-      showToast(`Inserted ${tag}`);
+      showToast('Inserted ' + tag);
     }
 
     function insertTemplateSkeleton(type) {
-      const textarea = document.getElementById('lyric-input');
-      let skeleton = '';
-      if (type === 'pop') {
-        skeleton = `[Intro - instrumentation only]\n\n[Verse 1]\nLine 1\nLine 2\nLine 3\nLine 4\n\n[Pre-Chorus - dynamic build]\nLine 5\nLine 6\n\n[Chorus - full band, layered vocals]\nMain hook line here\nSecondary hook line\nChorus climax line\nRefrain line\n\n[Verse 2]\nLine 7\nLine 8\n\n[Chorus - full band, layered vocals]\nMain hook line here\nSecondary hook line\nChorus climax line\nRefrain line\n\n[Bridge - stripped arrangement, emotional vocal]\nBridge line 1\nBridge line 2\n\n[Chorus - maximum energy]\nMain hook line here\nSecondary hook line\nChorus climax line\nRefrain line\n\n[Outro - repeating hook]\nFading line...\n\n[End]`;
-      } else if (type === 'edm') {
-        skeleton = `[Intro - atmospheric synth, slowly opening filter]\n\n[Verse 1 - sparse drums, vocal entry]\nFirst verse line\nSecond verse line\n\n[Build-up - rapid snare roll, rising white noise riser]\nHold on tight, here it comes\n\n[Drop - heavy sub bass, lead synth hook, aggressive drums]\n\n[Breakdown - piano melody, half-time groove]\nSlow down the pulse\n\n[Build-up - frantic snare roll, maximum riser pitch]\n\n[Drop - full power, high energy groove]\n\n[Outro - synth pad decays]\n\n[End - reverb tail fades]`;
-      }
-
-      if (textarea.value.trim() !== '') {
-        textarea.value += '\n\n' + skeleton;
-      } else {
-        textarea.value = skeleton;
-      }
+      const layout = LAYOUTS[type];
+      if (!layout) return;
+      const textarea = el('lyric-input');
+      textarea.value = textarea.value.trim() !== '' ? textarea.value + '\n\n' + layout.text : layout.text;
       updateLyricStats();
-      showToast('Inserted layout template');
+      showToast('Inserted ' + layout.label + ' layout');
     }
 
     function updateLyricStats() {
-      const text = document.getElementById('lyric-input').value;
+      const text = el('lyric-input').value;
       const lines = text ? text.split('\n').filter(l => l.trim().length > 0).length : 0;
       const words = text ? (text.match(/\b\S+\b/g) || []).length : 0;
-      document.getElementById('lyric-stats').textContent = `${lines} lines | ${words} words`;
+      el('lyric-stats').textContent = lines + ' lines | ' + words + ' words';
+
+      const chars = text.length;
+      const charsEl = el('lyric-chars');
+      charsEl.textContent = chars + ' / ' + LYRIC_LIMIT + ' chars';
+      charsEl.className = 'font-mono text-[11px] ' + (chars > LYRIC_LIMIT ? 'text-rose-400' : 'text-slate-500');
+
+      const box = el('lyric-warnings');
+      box.innerHTML = '';
+      const longTags = (text.match(/\[[^\]\n]*\]/g) || []).filter(t => t.length > LONG_TAG_LENGTH);
+      if (longTags.length) {
+        const p = document.createElement('p');
+        p.className = 'text-[11px] text-amber-300 flex items-start gap-1.5';
+        const icon = document.createElement('i');
+        icon.className = 'fa-solid fa-triangle-exclamation mt-0.5 text-amber-400';
+        const span = document.createElement('span');
+        span.textContent = longTags.length + ' bracket tag' + (longTags.length > 1 ? 's are' : ' is') +
+          ' over ' + LONG_TAG_LENGTH + ' characters. Long tags may get sung or ignored. Try shortening.';
+        p.appendChild(icon);
+        p.appendChild(span);
+        box.appendChild(p);
+      }
+      saveSession();
     }
 
     function clearLyrics() {
-      document.getElementById('lyric-input').value = '';
+      el('lyric-input').value = '';
       updateLyricStats();
       showToast('Lyrics cleared');
     }
 
-    function loadPreset(key) {
-      if (!key || !PRESETS[key]) return;
-      const preset = PRESETS[key];
-      selectedChips = new Set(preset.chips);
-      syncUIFromChips();
-      document.getElementById('lyric-input').value = preset.lyrics;
+    // ---------------------------------------------------------------
+    // Recipes: built-in and saved
+    // ---------------------------------------------------------------
+    function populatePresetSelect() {
+      const select = el('template-select');
+      Object.keys(PRESETS).forEach(key => {
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = PRESETS[key].label;
+        select.appendChild(opt);
+      });
+    }
+
+    function loadData(data) {
+      selectedChips = new Set((data.chips || []).map(norm));
+      excludedChips = new Set((data.exclude || []).map(norm));
+      el('lyric-input').value = data.lyrics || '';
+      renderChipGroups();
+      el('compiled-prompt').value = compileOrder().join(', ');
+      el('exclude-prompt').value = Array.from(excludedChips).join(', ');
+      updateCharCounter(el('compiled-prompt').value);
+      updateStyleWarnings();
       updateLyricStats();
-      showToast(`Loaded ${key.toUpperCase()} recipe`);
+    }
+
+    function loadPreset(key) {
+      const select = el('template-select');
+      if (!key || !PRESETS[key]) return;
+      loadData(PRESETS[key]);
+      showToast('Loaded ' + PRESETS[key].label);
+      select.value = '';
+      el('my-recipes').value = '';
+    }
+
+    function getRecipes() {
+      return safeGet(RECIPES_KEY) || {};
+    }
+
+    function refreshRecipeSelect(selected) {
+      const select = el('my-recipes');
+      select.innerHTML = '';
+      const first = document.createElement('option');
+      first.value = '';
+      first.textContent = '-- My Recipes --';
+      select.appendChild(first);
+      Object.keys(getRecipes()).forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        select.appendChild(opt);
+      });
+      select.value = selected || '';
+    }
+
+    function saveMyRecipe() {
+      const name = (window.prompt('Name this recipe:') || '').trim();
+      if (!name) return;
+      const recipes = getRecipes();
+      recipes[name] = {
+        chips: Array.from(selectedChips),
+        exclude: Array.from(excludedChips),
+        lyrics: el('lyric-input').value
+      };
+      safeSet(RECIPES_KEY, recipes);
+      refreshRecipeSelect(name);
+      showToast('Saved "' + name + '"');
+    }
+
+    function loadMyRecipe(name) {
+      if (!name) return;
+      const data = getRecipes()[name];
+      if (!data) return;
+      loadData(data);
+      el('template-select').value = '';
+      showToast('Loaded "' + name + '"');
+    }
+
+    function deleteMyRecipe() {
+      const name = el('my-recipes').value;
+      if (!name) {
+        showToast('Pick a saved recipe to delete');
+        return;
+      }
+      if (!window.confirm('Delete "' + name + '"?')) return;
+      const recipes = getRecipes();
+      delete recipes[name];
+      safeSet(RECIPES_KEY, recipes);
+      refreshRecipeSelect('');
+      showToast('Deleted "' + name + '"');
     }
 
     function resetAll() {
       selectedChips.clear();
+      excludedChips.clear();
+      el('lyric-input').value = '';
+      el('template-select').value = '';
+      el('my-recipes').value = '';
       syncUIFromChips();
-      document.getElementById('lyric-input').value = '';
-      document.getElementById('template-select').value = '';
+      syncExclude();
       updateLyricStats();
       showToast('Workstation reset');
     }
 
-    // Safe clipboard execution for iFrames
-    function executeCopy(text, successMsg) {
+    // ---------------------------------------------------------------
+    // Copy + export
+    // ---------------------------------------------------------------
+    async function executeCopy(text, successMsg) {
       if (!text.trim()) {
         showToast('Nothing to copy!');
         return;
       }
-      const el = document.createElement('textarea');
-      el.value = text;
-      el.setAttribute('readonly', '');
-      el.style.position = 'absolute';
-      el.style.left = '-9999px';
-      document.body.appendChild(el);
-      el.select();
       try {
-        document.execCommand('copy');
+        await navigator.clipboard.writeText(text);
         showToast(successMsg);
-      } catch (err) {
-        showToast('Clipboard access denied');
-      }
-      document.body.removeChild(el);
+        return;
+      } catch (e) { /* fall through to legacy copy */ }
+
+      const area = document.createElement('textarea');
+      area.value = text;
+      area.setAttribute('readonly', '');
+      area.style.position = 'absolute';
+      area.style.left = '-9999px';
+      document.body.appendChild(area);
+      area.select();
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(area);
+      showToast(ok ? successMsg : 'Copy failed, please select and copy manually');
     }
 
     function copyStylePrompt() {
-      const prompt = document.getElementById('compiled-prompt').value;
-      executeCopy(prompt, 'Style prompt copied to clipboard!');
+      executeCopy(el('compiled-prompt').value, 'Style prompt copied!');
+    }
+
+    function copyExclude() {
+      executeCopy(el('exclude-prompt').value, 'Exclude styles copied!');
     }
 
     function copyLyrics() {
-      const lyrics = document.getElementById('lyric-input').value;
-      executeCopy(lyrics, 'Lyrics copied to clipboard!');
+      executeCopy(el('lyric-input').value, 'Lyrics copied!');
     }
 
     function copyCombinedPackage() {
-      const style = document.getElementById('compiled-prompt').value;
-      const lyrics = document.getElementById('lyric-input').value;
-      const combined = `=== SUNO STYLE OF MUSIC ===\n${style}\n\n=== SUNO LYRICS & METATAGS ===\n${lyrics}`;
-      executeCopy(combined, 'Full recipe copied to clipboard!');
+      const style = el('compiled-prompt').value;
+      const exclude = el('exclude-prompt').value;
+      const lyrics = el('lyric-input').value;
+      let combined = '=== SUNO STYLE OF MUSIC ===\n' + style + '\n\n';
+      if (exclude.trim()) combined += '=== EXCLUDE STYLES ===\n' + exclude + '\n\n';
+      combined += '=== SUNO LYRICS & METATAGS ===\n' + lyrics;
+      executeCopy(combined, 'Full recipe copied!');
     }
 
     function downloadLyricsFile() {
-      const text = document.getElementById('lyric-input').value;
+      const text = el('lyric-input').value;
       if (!text.trim()) {
         showToast('Lyrics are empty!');
         return;
@@ -642,12 +1027,10 @@
     }
 
     function showToast(message) {
-      const toast = document.getElementById('toast');
-      const msg = document.getElementById('toast-message');
-      msg.textContent = message;
+      const toast = el('toast');
+      el('toast-message').textContent = message;
       toast.classList.remove('opacity-0', '-translate-y-16');
       toast.classList.add('opacity-100', 'translate-y-0');
-
       clearTimeout(window._toastTimeout);
       window._toastTimeout = setTimeout(() => {
         toast.classList.remove('opacity-100', 'translate-y-0');
@@ -655,10 +1038,22 @@
       }, 2500);
     }
 
-    // Initialize application
+    // ---------------------------------------------------------------
+    // Init
+    // ---------------------------------------------------------------
     window.onload = function () {
-      renderChipGroups();
-      loadPreset('synthwave');
+      populatePresetSelect();
+      refreshRecipeSelect('');
+      renderMetatagToolbar();
+      renderLayoutButtons();
+
+      const session = safeGet(STORE_KEY);
+      if (session && (session.chips || session.lyrics)) {
+        if (session.mode && STYLE_LIMITS[session.mode]) el('length-mode').value = session.mode;
+        loadData(session);
+      } else {
+        loadData(PRESETS.synthwave);
+      }
     };
   </script>
 </body>
