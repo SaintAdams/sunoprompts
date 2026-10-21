@@ -131,7 +131,7 @@
           <span class="text-[11px] text-slate-400">Artist, song, or both</span>
         </div>
         <p class="text-[11px] text-slate-400 leading-relaxed">
-          Describes the <em>sound</em> (genre, tempo, instruments, production, vocals, mood) so you never need a real name in the prompt. It gets the vibe, not a clone. Write your own lyrics.
+          Describes the <em>sound</em> (genre, tempo, instruments, production, vocals, mood) so you never need a real name in the prompt. It gets the style and feel, not a copy of a voice. Write your own lyrics.
         </p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div class="flex flex-col gap-1">
@@ -147,6 +147,22 @@
             <datalist id="sm-song-list"></datalist>
           </div>
         </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div class="flex flex-col gap-1">
+            <label for="sm-era" class="text-[10px] font-mono uppercase tracking-wider text-slate-500">Era</label>
+            <select id="sm-era" disabled class="w-full bg-slate-950/80 border border-slate-800 text-xs text-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-cyan-400 disabled:opacity-50">
+              <option value="">No eras for this artist yet</option>
+            </select>
+          </div>
+          <div class="flex flex-col gap-1">
+            <label for="sm-level" class="text-[10px] font-mono uppercase tracking-wider text-slate-500">Closeness</label>
+            <select id="sm-level" class="w-full bg-slate-950/80 border border-slate-800 text-xs text-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-cyan-400">
+              <option value="loose">Loose (genre + vibe)</option>
+              <option value="close" selected>Close (balanced)</option>
+              <option value="tight">Tight (max detail)</option>
+            </select>
+          </div>
+        </div>
         <div class="flex flex-wrap items-center gap-3">
           <label class="flex items-center gap-1.5 text-[11px] text-slate-400 cursor-pointer">
             <input type="checkbox" id="sm-replace" checked class="accent-cyan-500"> Replace current style
@@ -159,6 +175,10 @@
           </div>
         </div>
         <div id="sm-result" class="flex flex-col gap-2"></div>
+        <div class="border-t border-slate-800/80 pt-3 flex flex-col gap-2">
+          <div class="text-[10px] font-mono uppercase tracking-wider text-slate-500">Tune it after you hear it</div>
+          <div id="sm-tune" class="flex flex-wrap gap-1.5"></div>
+        </div>
       </div>
 
 
@@ -1110,7 +1130,7 @@
     // ==PURE-START==
     const SM_ARTISTS = [];
     const SM_SONGS = [];
-    function smA(name, aliases, g, i, t, v, m, x) { SM_ARTISTS.push({ name, aliases: aliases || [], g, i, t, v, m, x: x || [] }); }
+    function smA(name, aliases, g, i, t, v, m, x) { SM_ARTISTS.push({ name, aliases: aliases || [], g, i, t, v, m, x: x || [], d: [], eras: [] }); }
     function smS(title, artist, bpm, g, i, t, v, m, layout, aliases) { SM_SONGS.push({ title, artist, bpm, g, i, t, v, m, layout, aliases: aliases || [], x: [] }); }
 
     // ---------- Artists ----------
@@ -1207,6 +1227,85 @@
     smS("Johnny B. Goode", "Chuck Berry", "168 bpm", ["rock and roll"], ["double-stop guitar licks", "boogie piano", "shuffling backbeat"], [], ["brisk male vocals"], ["joyful"], "short");
     smS("Paranoid", "Black Sabbath", "", ["heavy metal"], ["fast riff-driven heavy guitar", "pounding drums", "short punchy arrangement"], [], ["nasal male vocals"], ["frantic"], "short");
 
+    // ---------- Deeper detail + eras (smMore adds to an artist already defined above) ----------
+    // d = playing style / gear / structure details, only used at "Tight" closeness
+    function smMore(name, d, eras) {
+      const a = SM_ARTISTS.find(x => x.name === name);
+      if (!a) return;
+      a.d = d || [];
+      a.eras = (eras || []).map(e => Object.assign({ label: '', g: [], i: [], t: [], v: [], m: [], d: [] }, e));
+    }
+
+    smMore("Dire Straits",
+      ["fingerstyle guitar with no pick", "compressed clean guitar tone", "bluesy guitar fills between vocal lines", "unhurried relaxed groove", "dynamic build to a long guitar outro"],
+      [
+        { label: "Early pub-rock era (1978-80)", g: ["blues rock", "pub rock"], i: ["fingerpicked clean guitar", "tight small-band sound", "simple restrained drums"], t: ["dry intimate band recording"], v: ["laid-back spoken-sung male vocals"], m: ["wry", "street-level storytelling"], d: ["jazzy chord fills"] },
+        { label: "Polished big-production era (1982-85)", g: ["80s rock", "mid-tempo rock"], i: ["glossy synth keyboards", "big gated-reverb drums", "melodic guitar leads"], t: ["polished spacious 80s production"], v: ["gruff laid-back male vocals"], m: ["wry", "expansive"] }
+      ]);
+
+    smMore("Queen",
+      ["multi-tracked guitar orchestra", "stacked harmonies recorded like a choir", "theatrical dynamic shifts", "piano and guitar interplay", "big gang-vocal chorus"],
+      [
+        { label: "70s layered glam and prog", g: ["glam rock", "progressive rock"], i: ["layered multi-tracked guitars", "grand piano"], t: ["rich analog studio production"], v: ["operatic male vocals with huge harmonies"], m: ["theatrical", "grand"] },
+        { label: "80s funk and synth rock", g: ["funk rock", "synth rock"], i: ["synth bass", "drum machine", "tight funk guitar", "handclaps"], t: ["clean polished 80s production"], v: ["powerful male vocals"], m: ["groovy", "anthemic"] }
+      ]);
+
+    smMore("The Beatles",
+      ["close three-part vocal harmonies", "melodic walking bass", "tasteful string arrangements"],
+      [
+        { label: "Early 60s beat pop", g: ["beat pop", "british invasion"], i: ["jangly guitars", "simple punchy drums", "handclaps"], t: ["raw live-sounding tape recording"], v: ["energetic close male harmonies"], m: ["joyful", "youthful"] },
+        { label: "Late 60s studio experimental", g: ["psychedelic pop", "art pop"], i: ["backwards tape effects", "sitar and orchestral strings", "creative studio layering"], t: ["experimental analog tape production"], v: ["dreamy double-tracked male vocals"], m: ["trippy", "imaginative"] }
+      ]);
+
+    smMore("Michael Jackson",
+      ["bass and drums locked in a tight groove", "layered vocal rhythm percussion", "dramatic string and brass arrangement"],
+      [
+        { label: "Off the Wall era, disco-funk", g: ["disco funk", "r&b pop"], i: ["lush strings", "funky bass", "brass section", "percussive guitar"], t: ["warm analog late-70s production"], v: ["joyful soaring male vocals"], m: ["joyful", "glittering"] },
+        { label: "Thriller and Bad era, synth-funk", g: ["synth funk", "pop rock"], i: ["synth bass", "punchy snare", "rock guitar solo", "synth brass"], t: ["glossy crisp 80s production"], v: ["sharp rhythmic male vocals with hiccups"], m: ["tense", "dramatic"] }
+      ]);
+
+    smMore("Nirvana",
+      ["quiet verse into loud explosive chorus", "tuned-down guitars", "heavy mid-range drums"],
+      [
+        { label: "Polished grunge (Nevermind)", g: ["grunge", "alternative rock"], t: ["big polished heavy mix"], m: ["angsty", "anthemic"] },
+        { label: "Raw and abrasive (In Utero)", g: ["noise rock", "grunge"], t: ["raw abrasive live sound"], m: ["bitter", "abrasive"] }
+      ]);
+
+    smMore("Pink Floyd",
+      ["slow patient builds", "long expressive guitar bends", "sound effects between sections"],
+      [
+        { label: "Dark Side era, smooth space rock", g: ["progressive rock", "space rock"], i: ["analog synth sequences", "saxophone solo", "slow bluesy guitar"], t: ["spacious immaculate studio mix"], v: ["calm understated male vocals"], m: ["dreamy", "reflective"] },
+        { label: "The Wall era, theatrical and bleak", g: ["rock opera", "art rock"], i: ["disco-tinged bass", "orchestral swells", "heavy guitar solo"], t: ["cinematic stark production"], v: ["strained theatrical male vocals"], m: ["bleak", "dramatic"] }
+      ]);
+
+    smMore("Fleetwood Mac",
+      ["tight vocal harmonies between a female and a male lead", "pulsing bass with simple drums", "layered fingerpicked acoustic guitars"],
+      [
+        { label: "Rumours era, polished soft rock", g: ["soft rock", "pop rock"], t: ["clean warm polished production"], m: ["wistful", "romantic"] },
+        { label: "Early blues-rock", g: ["british blues rock"], i: ["slide guitar", "raw blues riffs"], t: ["raw vintage band sound"], v: ["soulful male vocals"], m: ["gritty", "moody"] }
+      ]);
+
+    smMore("Daft Punk",
+      ["filtered sampled loop", "sidechain pumping", "talkbox and vocoder hooks"],
+      [
+        { label: "Early raw house", g: ["french house", "filter house"], i: ["distorted analog bass", "filter sweeps"], t: ["raw gritty drum machine"] },
+        { label: "Live disco (Random Access Memories)", g: ["live disco", "funk"], i: ["live session drums", "funky bass", "rhodes piano", "live strings"], t: ["warm analog tape sound"] }
+      ]);
+
+    smMore("Metallica",
+      ["fast down-picked palm-muted riffs", "long multi-part song structures", "dual harmonized lead guitar"],
+      [
+        { label: "80s thrash", g: ["thrash metal"], i: ["fast palm-muted riffs", "double kick drums", "razor-sharp guitar solos"], t: ["raw aggressive mix"], v: ["aggressive shouted male vocals"], m: ["furious"] },
+        { label: "90s heavy metal", g: ["heavy metal", "groove metal"], i: ["slower crushing riffs", "big dry drums"], t: ["thick polished heavy mix"], v: ["gruff melodic male vocals"], m: ["dark"] }
+      ]);
+
+    smMore("Radiohead",
+      ["loud-quiet dynamics", "unusual drum patterns", "falsetto climaxes"],
+      [
+        { label: "90s guitar rock", g: ["alternative rock", "britrock"], i: ["layered electric guitars"], t: ["big raw guitar mix"] },
+        { label: "2000s electronic art rock", g: ["art rock", "electronica"], i: ["synth pads", "glitchy drum machine", "clean piano"], t: ["cold atmospheric production"] }
+      ]);
+
     // ---------- Matching ----------
     function smNorm(s) {
       return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -1256,38 +1355,44 @@
       return list.filter(x => { const k = x.trim().toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
     }
 
-    // Merge the song's specifics on top of the artist's overall sound
-    function smBuild(artist, song) {
-      const groups = { g: [], bpm: [], v: [], i: [], t: [], m: [] };
+    // How many tags of each kind go in at each closeness level
+    const SM_LEVELS = {
+      loose: { g: 2, bpm: 1, v: 1, i: 2, t: 1, m: 1, d: 0 },
+      close: { g: 3, bpm: 1, v: 2, i: 4, t: 2, m: 2, d: 0 },
+      tight: { g: 3, bpm: 1, v: 3, i: 6, t: 3, m: 2, d: 4 }
+    };
+
+    // Song details first, then the chosen era, then the artist's overall sound
+    function smBuild(artist, song, era, level) {
+      const caps = SM_LEVELS[level] || SM_LEVELS.close;
+      const groups = { g: [], bpm: [], v: [], i: [], t: [], m: [], d: [] };
       const addAll = (key, list) => { groups[key] = smUnique(groups[key].concat(list || [])); };
       if (song) {
         addAll('g', song.g);
         if (song.bpm) addAll('bpm', [song.bpm]);
         addAll('v', song.v); addAll('i', song.i); addAll('t', song.t); addAll('m', song.m);
       }
-      if (artist) {
-        addAll('g', artist.g); addAll('v', artist.v); addAll('i', artist.i); addAll('t', artist.t); addAll('m', artist.m);
+      if (era) {
+        addAll('g', era.g); addAll('v', era.v); addAll('i', era.i); addAll('t', era.t); addAll('m', era.m); addAll('d', era.d);
       }
-      // Keep it tight: overlapping tags dilute a prompt more than they help
-      groups.g = groups.g.slice(0, 3);
-      groups.v = groups.v.slice(0, 2);
-      groups.i = groups.i.slice(0, 4);
-      groups.t = groups.t.slice(0, 2);
-      groups.m = groups.m.slice(0, 2);
+      if (artist) {
+        addAll('g', artist.g); addAll('v', artist.v); addAll('i', artist.i); addAll('t', artist.t); addAll('m', artist.m); addAll('d', artist.d);
+      }
+      Object.keys(groups).forEach(k => { groups[k] = groups[k].slice(0, caps[k]); });
       const exclude = smUnique([].concat(song ? song.x : [], artist ? artist.x : []));
       return { groups, exclude };
     }
 
     // Take tags round-robin across groups until the character budget is used
     function smPick(groups, budget) {
-      const order = ['g', 'bpm', 'v', 'i', 't', 'm'];
-      const idx = { g: 0, bpm: 0, v: 0, i: 0, t: 0, m: 0 };
+      const order = ['g', 'bpm', 'v', 'i', 'd', 't', 'm'];
+      const idx = { g: 0, bpm: 0, v: 0, i: 0, d: 0, t: 0, m: 0 };
       const chosen = [];
       let len = 0, progress = true;
       while (progress) {
         progress = false;
         for (const k of order) {
-          const arr = groups[k];
+          const arr = groups[k] || [];
           if (idx[k] >= arr.length) continue;
           const tag = arr[idx[k]++];
           const add = (chosen.length ? 2 : 0) + tag.length;
@@ -1297,10 +1402,37 @@
       }
       return chosen;
     }
+
+    // "Tune it" buttons: nudge the prompt after you hear a result in Suno
+    const SM_TUNES = [
+      { key: 'modern', label: 'Too modern', rm: /polished|glossy|slick|shiny|crisp/, add: ['vintage analog warmth', 'tape saturation'], ex: ['autotune', 'edm drops'] },
+      { key: 'clean', label: 'Too clean', rm: /polished|glossy|slick|shiny|crisp|clean (production|mix)/, add: ['raw gritty production', 'live room sound'] },
+      { key: 'busy', label: 'Too busy', rm: /layered|stacked|multi-tracked|lush|wall of/, add: ['sparse arrangement', 'simple steady drums'] },
+      { key: 'thin', label: 'Too thin', rm: /sparse|minimal|dry/, add: ['full warm low end', 'rich arrangement'] },
+      { key: 'smoothvox', label: 'Vocals too smooth', rm: /smooth|polished vocal/, add: ['raspy gritty vocals'] },
+      { key: 'harshvox', label: 'Vocals too harsh', rm: /raspy|gravelly|screaming|shouted|gruff/, add: ['smooth warm vocals'] },
+      { key: 'slower', label: 'Slower', bpm: -10 },
+      { key: 'faster', label: 'Faster', bpm: 10 },
+      { key: 'energy', label: 'More energy', add: ['driving', 'energetic', 'tight punchy drums'] },
+      { key: 'mellow', label: 'More mellow', rm: /driving|aggressive|energetic|rowdy|intense/, add: ['laid-back', 'soft dynamics'] }
+    ];
+
+    function smTune(chips, exclude, key) {
+      const t = SM_TUNES.find(x => x.key === key);
+      if (!t) return { chips: chips.slice(), exclude: exclude.slice(), changed: false };
+      let out = chips.slice();
+      if (t.rm) out = out.filter(c => !t.rm.test(c));
+      if (t.bpm) out = out.map(c => c.replace(/\b(\d{2,3})\s*bpm\b/, (m, n) => Math.max(40, Math.min(220, +n + t.bpm)) + ' bpm'));
+      (t.add || []).forEach(a => { if (!out.includes(a)) out.push(a); });
+      const ex = exclude.slice();
+      (t.ex || []).forEach(a => { if (!ex.includes(a)) ex.push(a); });
+      const changed = JSON.stringify(out) !== JSON.stringify(chips) || ex.length !== exclude.length;
+      return { chips: out, exclude: ex, changed };
+    }
     // ==PURE-END==
 
     // ---------- UI ----------
-    const SM_RANK = { g: 0, bpm: 1, i: 2, t: 3, v: 4, m: 5 };
+    const SM_RANK = { g: 0, bpm: 1, i: 2, d: 2.5, t: 3, v: 4, m: 5 };
 
     function smEl(tag, cls, text) {
       const e = document.createElement(tag);
@@ -1361,9 +1493,52 @@
       out.appendChild(box);
     }
 
+    function smFillEras(artistText) {
+      const sel = el('sm-era');
+      const hit = artistText.trim() ? smFind(artistText, SM_ARTISTS) : null;
+      const eras = hit ? hit.item.eras : [];
+      sel.innerHTML = '';
+      const first = document.createElement('option');
+      first.value = '';
+      first.textContent = eras.length ? 'Any era (blend)' : 'No eras for this artist yet';
+      sel.appendChild(first);
+      eras.forEach((e, i) => {
+        const o = document.createElement('option');
+        o.value = String(i);
+        o.textContent = e.label;
+        sel.appendChild(o);
+      });
+      sel.disabled = !eras.length;
+    }
+
+    function renderTune() {
+      const box = el('sm-tune');
+      box.innerHTML = '';
+      SM_TUNES.forEach(t => {
+        const b = smEl('button', 'text-[11px] px-2 py-1 rounded-md bg-slate-800 hover:bg-cyan-600/20 text-slate-300 hover:text-cyan-200 border border-slate-700/60 hover:border-cyan-500/40 transition-colors', t.label);
+        b.type = 'button';
+        b.onclick = () => applyTune(t.key);
+        box.appendChild(b);
+      });
+    }
+
+    function applyTune(key) {
+      const before = compileOrder();
+      if (!before.length) { showToast('Run Sound Match or add some tags first'); return; }
+      const res = smTune(before, Array.from(excludedChips), key);
+      if (!res.changed) { showToast('Nothing to change for that one'); return; }
+      res.chips.forEach(c => { if (TAG_RANK[c] === undefined) TAG_RANK[c] = 3.5; });
+      selectedChips = new Set(res.chips);
+      excludedChips = new Set(res.exclude);
+      syncUIFromChips();
+      syncExclude();
+      showToast('Tuned: ' + SM_TUNES.find(t => t.key === key).label);
+    }
+
     function runSoundMatch() {
       const aq = el('sm-artist').value.trim();
       const sq = el('sm-song').value.trim();
+      const level = el('sm-level').value;
       const out = el('sm-result');
       out.innerHTML = '';
       if (!aq && !sq) { showToast('Enter an artist, a song, or both'); return; }
@@ -1383,17 +1558,22 @@
       if (!artist && song) artist = SM_ARTISTS.find(a => a._n[0] === song._a) || null;
       if (!artist && !song) { smNotFound(aq, sq); return; }
 
+      const eraIdx = el('sm-era').value;
+      const era = (aHit && artist === aHit.item && eraIdx !== '') ? (artist.eras[+eraIdx] || null) : null;
+
       const notes = [];
       if (aq && !aHit) notes.push('Artist "' + aq + '" is not in the library, so only the song was used.');
       if (sq && !sHit) notes.push('Song "' + sq + '" is not in the library, so the artist\'s overall sound was used.');
       if (aHit && aHit.how === 'fuzzy') notes.push('Artist matched to "' + aHit.item.name + '".');
       if (sHit && sHit.how === 'fuzzy') notes.push('Song matched to "' + sHit.item.title + '".');
       if (song && aHit && song._a !== aHit.item._n[0]) notes.push('"' + song.title + '" is by ' + song.artist + ' in the library, so both sounds were blended.');
+      if (era) notes.push('Era: ' + era.label + '.');
 
-      const built = smBuild(artist, song);
-      const fullLen = smPick(built.groups, 100000).map(c => c.tag).join(', ').length;
+      const built = smBuild(artist, song, era, level);
+      const everything = smPick(built.groups, 100000);
+      const needed = everything.map(c => c.tag).join(', ').length;
       let switched = false;
-      if (fullLen > STYLE_LIMITS.short.target && el('length-mode').value === 'short') {
+      if ((level === 'tight' || needed > STYLE_LIMITS.short.target) && el('length-mode').value === 'short') {
         el('length-mode').value = 'detailed';
         switched = true;
       }
@@ -1411,7 +1591,8 @@
       syncExclude();
 
       if (switched) notes.push('Switched to Detailed length so more of the sound fits.');
-      if (chosen.length < smPick(built.groups, 100000).length) notes.push('Some detail was trimmed to fit the length limit. Raise STYLE_LIMITS if Suno allows more.');
+      if (chosen.length < everything.length) notes.push('Some detail was trimmed to fit the length limit. Raise STYLE_LIMITS if Suno allows more.');
+      if (level !== 'tight' && ((artist && artist.d && artist.d.length) || (era && era.d && era.d.length))) notes.push('Set closeness to Tight to include playing-style details.');
 
       const box = smEl('div', 'rounded-xl border border-cyan-500/20 bg-slate-950/60 p-3 flex flex-col gap-2');
       const names = [];
@@ -1420,7 +1601,7 @@
       box.appendChild(smEl('p', 'text-xs text-slate-300', 'Matched (for you only, never put in the prompt): ' + names.join(' - ')));
       const promptText = compileOrder().join(', ');
       box.appendChild(smEl('p', 'text-xs font-mono text-cyan-200 leading-relaxed break-words', promptText));
-      box.appendChild(smEl('p', 'text-[11px] text-slate-500', 'Applied to the Style box below (' + promptText.length + ' chars). Tweak any chip, then copy.'));
+      box.appendChild(smEl('p', 'text-[11px] text-slate-500', 'Applied to the Style box below (' + promptText.length + ' chars). Generate in Suno, then use the Tune buttons if something is off.'));
       notes.forEach(n => smNote(box, n));
       if (song && song.layout && LAYOUTS[song.layout]) {
         const b = smEl('button', 'self-start text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors');
@@ -1438,6 +1619,7 @@
       el('sm-song').value = '';
       el('sm-result').innerHTML = '';
       smFillSongList('');
+      smFillEras('');
     }
 
     // Warn if a known artist or song name ends up in the style prompt
@@ -1465,7 +1647,9 @@
     };
 
     smFillLists();
-    el('sm-artist').addEventListener('input', e => smFillSongList(e.target.value));
+    el('sm-artist').addEventListener('input', e => { smFillSongList(e.target.value); smFillEras(e.target.value); });
+    smFillEras('');
+    renderTune();
     ['sm-artist', 'sm-song'].forEach(id => el(id).addEventListener('keydown', e => {
       if (e.key === 'Enter') { e.preventDefault(); runSoundMatch(); }
     }));
