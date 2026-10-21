@@ -324,6 +324,67 @@
     <!-- RIGHT: Lyrics -->
     <section class="lg:col-span-7 flex flex-col gap-4">
 
+      <!-- Lyric Generator -->
+      <div id="lyric-gen" class="bg-slate-900/70 border border-violet-500/25 rounded-2xl p-5 shadow-xl flex flex-col gap-3">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-pen-nib text-violet-400 text-sm"></i>
+            <h2 class="text-sm font-semibold tracking-wide uppercase text-slate-300">Lyric Generator</h2>
+          </div>
+          <span class="text-[11px] text-slate-400">Follows your Sound Match</span>
+        </div>
+        <p class="text-[11px] text-slate-400 leading-relaxed">
+          Writes original lyrics shaped by the sound you matched: song structure, vocal cues and theme. It never copies real lyrics, and the drafts are a starting point. For polished writing, copy the AI brief into any AI chat.
+        </p>
+        <div class="flex flex-col gap-1">
+          <label for="lg-topic" class="text-[10px] font-mono uppercase tracking-wider text-slate-500">What's it about? (optional)</label>
+          <input id="lg-topic" type="text" autocomplete="off" placeholder="e.g. driving home at night"
+                 class="w-full bg-slate-950/80 border border-slate-800 text-xs text-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-violet-500 placeholder-slate-500 transition-all">
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div class="flex flex-col gap-1">
+            <label for="lg-theme" class="text-[10px] font-mono uppercase tracking-wider text-slate-500">Theme</label>
+            <select id="lg-theme" class="w-full bg-slate-950/80 border border-slate-800 text-xs text-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-violet-500">
+              <option value="auto">Auto (from topic and sound)</option>
+              <option value="road">On the road</option>
+              <option value="love">Love</option>
+              <option value="heartbreak">Heartbreak</option>
+              <option value="rebel">Rebellion</option>
+              <option value="party">Party / dance</option>
+              <option value="home">Home / memories</option>
+            </select>
+          </div>
+          <div class="flex flex-col gap-1">
+            <label for="lg-struct" class="text-[10px] font-mono uppercase tracking-wider text-slate-500">Song shape</label>
+            <select id="lg-struct" class="w-full bg-slate-950/80 border border-slate-800 text-xs text-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-violet-500">
+              <option value="auto">Auto (match the sound)</option>
+              <option value="pop">Pop</option>
+              <option value="story">Storyteller</option>
+              <option value="rock">Rock</option>
+              <option value="ballad">Ballad</option>
+              <option value="dance">Dance</option>
+              <option value="punk">Punk</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+          <label class="flex items-center gap-1.5 text-[11px] text-slate-400 cursor-pointer">
+            <input type="checkbox" id="lg-replace" checked class="accent-violet-500"> Replace current lyrics
+          </label>
+          <div class="ml-auto flex items-center gap-2">
+            <button onclick="copyLyricBrief()" class="text-xs text-slate-300 hover:text-white px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors" title="Copies a detailed brief to paste into any AI chat for polished lyrics">
+              <i class="fa-regular fa-copy mr-1"></i> Copy AI brief
+            </button>
+            <button onclick="generateLyrics()" class="bg-violet-600 hover:bg-violet-500 text-white font-semibold px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md shadow-violet-950/50">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Generate lyrics
+            </button>
+          </div>
+        </div>
+        <div id="lg-info"></div>
+      </div>
+
+
+
       <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-5 shadow-xl flex flex-col gap-4 flex-1">
 
         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
@@ -1493,6 +1554,8 @@
       out.appendChild(box);
     }
 
+    let smLast = null;
+
     function smFillEras(artistText) {
       const sel = el('sm-era');
       const hit = artistText.trim() ? smFind(artistText, SM_ARTISTS) : null;
@@ -1569,6 +1632,7 @@
       if (song && aHit && song._a !== aHit.item._n[0]) notes.push('"' + song.title + '" is by ' + song.artist + ' in the library, so both sounds were blended.');
       if (era) notes.push('Era: ' + era.label + '.');
 
+      smLast = { artist, song, era };
       const built = smBuild(artist, song, era, level);
       const everything = smPick(built.groups, 100000);
       const needed = everything.map(c => c.tag).join(', ').length;
@@ -1653,6 +1717,240 @@
     ['sm-artist', 'sm-song'].forEach(id => el(id).addEventListener('keydown', e => {
       if (e.key === 'Enter') { e.preventDefault(); runSoundMatch(); }
     }));
+  </script>
+  <!-- Lyric Generator logic -->
+  <script>
+    // ===============================================================
+    // LYRIC GENERATOR: writes ORIGINAL lyrics shaped by your Sound Match
+    // (structure, vocal cues, theme, hook style). Lines come from the
+    // theme banks below: each theme has 4 rhyme families of 4 lines,
+    // so any two lines from the same family rhyme. To add a theme, add
+    // an entry to LG_THEMES (4 families x 4 lines) plus a keyword rule.
+    // ===============================================================
+    // ==LG-PURE-START==
+    const LG_THEMES = {
+      road: { label: 'On the road', fam: [
+        ["Taillights bleeding red into the night", "Mile markers flashing in the headlight", "Both hands on the wheel and holding on tight", "The city's getting smaller out of sight"],
+        ["Gravel humming under me on the open road", "I packed a whole life in a single load", "Every wrong turn taught me more than the map ever showed", "Dropped the weight I carried and I finally unload"],
+        ["Wipers keep the rhythm through the rain", "A midnight whistle crying like a distant train", "Slipping out of town and breaking every chain", "Tires humming promises I don't need to explain"],
+        ["Putting miles between me and yesterday", "Sunrise creeping up to meet me halfway", "Nobody left to tell me where to stay", "The open sky has plenty more to say"]
+      ] },
+      love: { label: 'Love', fam: [
+        ["The way you laugh makes every dark room shine", "I never believed in luck till you were mine", "Our names are written on the same bright line", "Every small coincidence feels like a sign"],
+        ["I hold you close and everything feels clear", "Wherever you are is where I want to be, right here", "You turned a lonely season into a golden year", "With you beside me I forget my fear"],
+        ["Falling like a feather from the sky above", "There's a hundred ways to say it, and they all spell love", "Soft as a whisper, gentle as a dove", "Nothing's ever felt as good as being loved"],
+        ["Wherever you are is where I call home", "You took a stranger and you made him far from alone", "All my walls came down like crumbling stone", "For the first time in my life I feel truly known"]
+      ] },
+      heartbreak: { label: 'Heartbreak', fam: [
+        ["Your coffee cup is still here but you're gone", "I leave the porch light burning all night long", "I watched the empty window turn gray with dawn", "Everyone says time will help me move on"],
+        ["Every street I walk down is painted blue", "I never knew a goodbye could cut right through", "I keep on searching for a trace of you", "There's nothing left for either of us to do"],
+        ["I keep on staring at the closing door", "I'm pacing like a ghost across the floor", "I never said it, but I loved you more", "Nothing feels the way it did before"],
+        ["The days drag on so painfully slow", "I'd run to you, but I already know", "The words I never said begin to show", "Another lonely evening settling low"]
+      ] },
+      rebel: { label: 'Rebellion', fam: [
+        ["Sparks are flying, set the sky on fire", "Every wall they build just makes us climb higher", "Tell the ones in power we're no longer for hire", "We're louder than the static in the wire"],
+        ["Nobody's gonna tear us down", "We're the loudest voices in this sleepy town", "Tear up the rulebook, burn the crown", "Feel the thunder shaking all the ground"],
+        ["Tired of living how they told me to be", "Break the lock and throw away the key", "One more minute and I'm finally free", "Open up your eyes, there's more to see"],
+        ["Pick a side and never run to hide", "We wear our scars with a stubborn pride", "Throw the doors of every cage open wide", "You can't hold back a rising tide"]
+      ] },
+      party: { label: 'Party / dance', fam: [
+        ["Turn it up loud and take a chance", "Feel the bassline pull you into a trance", "Lose your worries on the floor and dance", "One look at you and it's a brand-new romance"],
+        ["Don't go home, the night is young, so come and play", "Raise your hands and sing, we're here to stay", "Throw the whole week's worries far away", "Dance until the sun brings in a brand-new day"],
+        ["Feel the rhythm taking over, let it flow", "Neon lights are painting us a glow", "Put your hands together, steal the show", "Everybody's moving, let the music go"],
+        ["Everyone is dancing, wild and free", "Count it down with me: one, two, three", "Hold my hand and come along with me", "Spinning round the room as far as you can see"]
+      ] },
+      home: { label: 'Home / memories', fam: [
+        ["Dusty streets in my old hometown", "Evening sun is slowly settling down", "Faded photographs in sepia brown", "The church bell rings that old familiar sound"],
+        ["We lived forever in the summertime", "Our laughter had its own sweet rhyme", "Those days were slipping through the hands of time", "Every little hill felt like a mountain we could climb"],
+        ["Evening settles golden on the hill", "The old creek runs while time stands still", "Porch lights glowing like they always will", "A quiet in the air, a gentle chill"],
+        ["Barefoot kids are running down the street", "Summer air is thick with tar and heat", "Every friendly face I used to meet", "The memory of home still tastes so sweet"]
+      ] }
+    };
+    const LG_THEME_KEYS = Object.keys(LG_THEMES);
+
+    // Words in the topic that point to a theme
+    const LG_KEYWORDS = {
+      road: /\b(road|roads|drive|driving|car|cars|highway|night|travel|journey|escape|leave|leaving|trip|miles?|train)\b/g,
+      love: /\b(love|loved|heart|kiss|romance|together|crush|forever|dating|wedding|beautiful)\b/g,
+      heartbreak: /\b(breakup|broken|heartbreak|miss|missing|lonely|gone|goodbye|over|sad|cry|crying|ex|lost)\b/g,
+      rebel: /\b(rebel|rebellion|fight|angry|rage|free|freedom|system|protest|revolution|punk|rise|against|burn)\b/g,
+      party: /\b(party|dance|dancing|club|weekend|friday|celebrate|fun|drink|drinks|festival)\b/g,
+      home: /\b(home|town|hometown|childhood|memory|memories|summer|nostalgia|family|remember|old|village)\b/g
+    };
+
+    // Mood words from Sound Match point to a theme (first match wins)
+    const LG_MOODS = [
+      ['rebel', /rebel|angst|aggress|furious|menac|gritty|rowdy|intense|bitter|abrasive|raw|defiant/],
+      ['heartbreak', /melanchol|heartbroken|bittersweet|brood|bleak|lonely|self-loath|anxious/],
+      ['love', /romantic|sensual|sultry|heartfelt|warm|comfort|confessional/],
+      ['party', /joy|euphor|groov|playful|party|feel-good|strutting|energetic|fun|cheeky|uplifting|swaggering|catchy/],
+      ['home', /nostalg|wistful|laid-back|reassuring|sunny|street-level|working-class|storytelling|poetic/],
+      ['road', /adventur|epic|restless|dreamy|nocturnal|hopeful|expansive|anthemic|mysterious|hazy/]
+    ];
+
+    // Song shapes (and a few style touches) per type of sound
+    const LG_PROFILES = {
+      pop:    { label: 'Pop',          struct: ['Intro', 'V1', 'Ch', 'V2', 'Ch', 'Br', 'Ch', 'Out'],          chTag: 'catchy hook',        adlib: '(oh-oh)',    hook: 2 },
+      story:  { label: 'Storyteller',  struct: ['Intro', 'V1', 'V2', 'Ch', 'Solo', 'Br', 'Ch', 'Out'],        chTag: 'laid-back refrain',  adlib: '',           hook: 1 },
+      rock:   { label: 'Rock',         struct: ['Intro', 'V1', 'Ch', 'V2', 'Ch', 'Gtr', 'Br', 'Ch', 'Out'],   chTag: 'big gang vocals',    adlib: '(hey!)',     hook: 2 },
+      ballad: { label: 'Ballad',       struct: ['Intro', 'V1', 'V2', 'Ch', 'Br', 'Ch', 'Out'],                chTag: 'building, emotional', adlib: '',          hook: 1 },
+      dance:  { label: 'Dance',        struct: ['Intro', 'V1', 'Build', 'Ch', 'V2', 'Build', 'Ch', 'Out'],    chTag: 'catchy hook',        adlib: '(yeah!)',    hook: 3 },
+      punk:   { label: 'Punk',         struct: ['Intro', 'V1', 'Ch', 'V2', 'Ch', 'Out'],                      chTag: 'gang vocals',        adlib: '(whoa-oh!)', hook: 2 }
+    };
+    const LG_LAYOUT_MAP = { pop: 'pop', rock: 'rock', ballad: 'ballad', edm: 'dance', short: 'pop', hiphop: 'pop' };
+    const LG_STRUCT_TAG = { Intro: '[Intro]', V1: '[Verse 1]', V2: '[Verse 2]', Ch: '[Chorus]', Br: '[Bridge]', Build: '[Build-up]', Solo: '[Instrumental Break]', Gtr: '[Guitar Solo]', Out: '[Outro]' };
+
+    function lgPickTheme(topic, moods, rng) {
+      const t = String(topic || '').toLowerCase();
+      let best = null, bestN = 0;
+      LG_THEME_KEYS.forEach(k => {
+        const n = (t.match(LG_KEYWORDS[k]) || []).length;
+        if (n > bestN) { best = k; bestN = n; }
+      });
+      if (best) return best;
+      const m = (moods || []).join(' ').toLowerCase();
+      for (const [k, re] of LG_MOODS) if (re.test(m)) return k;
+      return LG_THEME_KEYS[Math.floor((rng || Math.random)() * LG_THEME_KEYS.length)];
+    }
+
+    function lgPickProfile(artist, song) {
+      if (song && song.layout && LG_LAYOUT_MAP[song.layout]) return LG_LAYOUT_MAP[song.layout];
+      const g = artist ? artist.g.join(' ').toLowerCase() : '';
+      if (/thrash|metal|hard rock|grunge|garage|arena/.test(g)) return 'rock';
+      if (/punk/.test(g)) return 'punk';
+      if (/folk|country|outlaw|heartland|blues|reggae|soft rock|yacht/.test(g)) return 'story';
+      if (/soul|ballad|baroque|cinematic|orchestral/.test(g)) return 'ballad';
+      if (/house|disco|synth|funk|electro|trance/.test(g)) return 'dance';
+      if (/rock/.test(g)) return 'rock';
+      return 'pop';
+    }
+
+    function lgShuffle(arr, rng) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        const tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+      }
+      return a;
+    }
+
+    function lgClean(topic) {
+      return String(topic || '').replace(/[^A-Za-z0-9'’ -]+/g, ' ').replace(/\s+/g, ' ').trim().split(' ').slice(0, 6).join(' ');
+    }
+    function lgCase(s) {
+      const small = new Set(['a', 'an', 'the', 'of', 'in', 'on', 'at', 'to', 'and', 'or', 'for', 'with']);
+      return s.split(' ').filter(Boolean).map((w, i) => (i > 0 && small.has(w.toLowerCase())) ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+    }
+    function lgTitle(topic) {
+      const c = lgClean(topic);
+      return c ? lgCase(c) : '';
+    }
+    function lgTail(line, n) {
+      return line.replace(/[^A-Za-z' ]/g, '').split(' ').filter(Boolean).slice(-n).join(' ');
+    }
+
+    // o: { theme, profile, topic, vtag, rng }
+    function lgGenerate(o) {
+      const rng = o.rng || Math.random;
+      const themeKey = LG_THEMES[o.theme] ? o.theme : LG_THEME_KEYS[Math.floor(rng() * LG_THEME_KEYS.length)];
+      const profId = LG_PROFILES[o.profile] ? o.profile : 'pop';
+      const prof = LG_PROFILES[profId];
+      const fams = lgShuffle(LG_THEMES[themeKey].fam, rng).map(f => lgShuffle(f, rng));
+      const A = fams[0], B = fams[1], C = fams[2], D = fams[3];
+
+      const verse1 = [A[0], A[1], B[0], B[1]];
+      const verse2 = [A[2], A[3], B[2], B[3]];
+      const chorusCore = [C[0], D[0], C[1], D[1]];
+      const bridge = [C[2], D[2], C[3], D[3]];
+
+      const topicTitle = lgTitle(o.topic);
+      const title = topicTitle || lgCase(lgTail(C[0], 3));
+      const chorus = chorusCore.concat([Array(prof.hook).fill(title).join(', ')]);
+      if (prof.adlib) chorus.push(prof.adlib);
+      const outro = topicTitle
+        ? ['It always comes back to ' + lgClean(o.topic).toLowerCase(), title + '...']
+        : [lgTail(C[0], 3).toLowerCase() + '...'];
+
+      const vt = o.vtag ? ' - ' + o.vtag : '';
+      const chTotal = prof.struct.filter(s => s === 'Ch').length;
+      let chN = 0;
+      const blocks = [];
+      prof.struct.forEach(s => {
+        if (s === 'V1') blocks.push(['[Verse 1' + vt + ']'].concat(verse1));
+        else if (s === 'V2') blocks.push(['[Verse 2]'].concat(verse2));
+        else if (s === 'Ch') {
+          chN++;
+          const tag = chN === 1 ? '[Chorus - ' + prof.chTag + ']' : (chN === chTotal ? '[Chorus - final]' : '[Chorus]');
+          blocks.push([tag].concat(chorus));
+        }
+        else if (s === 'Br') blocks.push(['[Bridge]'].concat(bridge));
+        else if (s === 'Out') blocks.push(['[Outro]'].concat(outro, ['', '[End]']));
+        else blocks.push([LG_STRUCT_TAG[s]]);
+      });
+      return {
+        text: blocks.map(b => b.join('\n')).join('\n\n'),
+        title, themeKey, profileId: profId
+      };
+    }
+    // ==LG-PURE-END==
+
+    // ---------- UI ----------
+    function lgContext() {
+      const ctx = smLast || {};
+      const artist = ctx.artist || null, song = ctx.song || null, era = ctx.era || null;
+      const moods = [].concat(song ? song.m : [], era ? era.m : [], artist ? artist.m : []);
+      const stSel = el('lg-struct').value;
+      const thSel = el('lg-theme').value;
+      const profile = stSel !== 'auto' ? stSel : ((artist || song) ? lgPickProfile(artist, song) : 'pop');
+      const topic = el('lg-topic').value.trim();
+      const theme = thSel !== 'auto' ? thSel : lgPickTheme(topic, moods, Math.random);
+      let vtag = '';
+      const cands = [song && song.v[0], era && era.v[0], artist && artist.v[0]].filter(Boolean);
+      for (const c of cands) { if (c.length <= 34) { vtag = c; break; } }
+      return { artist, song, profile, topic, theme, vtag, fromMatch: !!(artist || song) };
+    }
+
+    function generateLyrics() {
+      const c = lgContext();
+      const res = lgGenerate({ theme: c.theme, profile: c.profile, topic: c.topic, vtag: c.vtag });
+      const box = el('lyric-input');
+      if (!el('lg-replace').checked && box.value.trim()) box.value = box.value.replace(/\s+$/, '') + '\n\n' + res.text;
+      else box.value = res.text;
+      updateLyricStats();
+      const info = el('lg-info');
+      info.innerHTML = '';
+      const p = smEl('p', 'text-[11px] text-slate-400',
+        'Wrote a ' + LG_PROFILES[res.profileId].label.toLowerCase() + '-shaped song on "' + LG_THEMES[res.themeKey].label.toLowerCase() + '"' +
+        (c.fromMatch ? ', following your last Sound Match' : ' (run Sound Match first to tailor it to an artist or song)') +
+        '. Working title: ' + res.title + '. Hit Generate again for a new take.');
+      info.appendChild(p);
+      showToast('Lyrics generated');
+    }
+
+    function copyLyricBrief() {
+      const c = lgContext();
+      const prof = LG_PROFILES[c.profile];
+      const tags = prof.struct.map(s => LG_STRUCT_TAG[s]).join(', ');
+      const sound = el('compiled-prompt').value.trim();
+      const lines = [
+        'Write ORIGINAL song lyrics for a Suno track. Do not quote, copy or closely imitate any existing song or artist; write something new.',
+        'Topic: ' + (c.topic || 'your choice, fitting the theme'),
+        'Theme: ' + LG_THEMES[c.theme].label,
+        sound ? 'Sound (for tone and mood only): ' + sound : '',
+        'Song structure, in order: ' + tags,
+        'Rules:',
+        '- Put each section tag in square brackets on its own line, and keep tags short (under 60 characters).',
+        '- 4 lines per verse and chorus, around 6 to 10 syllables per line, easy to sing.',
+        '- Rhyme verses AABB and the chorus ABAB. Use fresh, concrete images rather than clichés.',
+        '- Repeat one short hook line in every chorus.' + (c.vtag ? ' Vocal delivery: ' + c.vtag + '.' : ''),
+        '- No real artist or song names. Output only the lyrics with their tags.'
+      ].filter(Boolean);
+      executeCopy(lines.join('\n'), 'AI lyric brief copied!');
+    }
+
+    el('lg-topic').addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); generateLyrics(); }
+    });
   </script>
 </body>
 </html>
